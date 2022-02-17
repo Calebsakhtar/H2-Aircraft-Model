@@ -1,7 +1,3 @@
-#include <vector>
-#include <assert.h>
-#include <algorithm>
-
 #include "../headers/MathTools.h"
 
 namespace MathTools {

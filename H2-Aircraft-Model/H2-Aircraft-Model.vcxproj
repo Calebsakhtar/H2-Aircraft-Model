@@ -139,10 +139,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\AircraftModel.cpp" />
     <ClCompile Include="H2-Aircraft-Model.cpp" />
     <ClCompile Include="src\MathTools.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="headers\AircraftModel.h" />
     <ClInclude Include="headers\MathTools.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

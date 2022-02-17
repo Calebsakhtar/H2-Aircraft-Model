@@ -1,6 +1,10 @@
 #ifndef AIRCRAFT_MATHTOOLS_H
 #define AIRCRAFT_MATHTOOLS_H
 
+#include <vector>
+#include <assert.h>
+#include <algorithm>
+
 namespace MathTools {
 
 	// Return the interpolation result
