@@ -23,6 +23,10 @@ namespace AircraftModel {
 	// M is the Mach number of the free-stream flow
 	double compute_turb_frict_coeff(const double& Re, const double& M);
 
+	double compute_delta_CD(const double& current_d, const double& current_l,
+		const double& next_d, const double& next_l, const double& M,
+		const double& cruise_h);
+
 }
 
 #endif

@@ -85,7 +85,34 @@ namespace AircraftModel {
 		return Cf_turb;
 	}
 
-	//double compute_delta_CD(const double& current_t, const double& current_length,
-	//	const double& M, const double& cruise_h) {
-	//}
+	double compute_delta_CD(const double& current_d, const double& current_l,
+		const double& next_d, const double& next_l, const double& M, 
+		const double& cruise_h) {
+
+		// Calculate ISA values
+		double T = 0;
+		double a = 0;
+		double P = 0;
+		double rho = 0;
+		double visc = 0;
+		ISA(cruise_h, T, a, P, rho, visc);
+
+		// Calculate TAS and the Reynolds number
+		double TAS = a * M;
+		const double Re = rho * TAS * current_l / visc;
+
+		// Compute the fricion coefficient for a flat ptlate
+		double Cf = compute_turb_frict_coeff(Re, M);
+
+		// Compute the gradient of the Fuselage Skin Drag Coefficient
+		double current_t = current_d / current_l;
+		double dC_dt = Cf * (-pow(current_t, -2) - 0.05 * pow(current_t, -3) + 60);
+
+		// Calculate change in the tube fineness ratio
+		double next_t = next_d/next_l;
+		double delta_t = next_t - current_t;
+
+		// Calculate the delta in CD using a 1st order Taylor expansion
+		return delta_t * dC_dt;
+	}
 }
