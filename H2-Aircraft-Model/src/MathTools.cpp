@@ -7,14 +7,18 @@
 namespace MathTools {
 
 	bool interpolate_fn(const std::vector<double>& x_vals, const std::vector<double>& y_vals,
-		const double& input_x, double& result_y) {
+		const double& input_x, double& result_y, const bool reverse) {
 
 		// Perform checks to the input data
 		assert(x_vals.size() > 0);
 		assert(x_vals.size() == y_vals.size()); // Check the inputs are of consistent size
-		assert(std::is_sorted(x_vals.begin(), x_vals.end())); // Check x vector is sorted
-		assert(x_vals[0] <= input_x); // Assert the input is at least equal to the smallest xval
-		assert(*x_vals.end() >= input_x); // Assert the input does not surpass the largest xval
+
+		// If we are going from input to output (and not the reverse), perform these checks
+		if (!reverse) {
+			assert(std::is_sorted(x_vals.begin(), x_vals.end())); // Check x vector is sorted
+			assert(x_vals[0] <= input_x); // Assert the input is at least equal to the smallest xval
+			assert(*x_vals.end() >= input_x); // Assert the input does not surpass the largest xval
+		}
 
 		// initialize the variable to hold the index 
 		size_t j = 0;
