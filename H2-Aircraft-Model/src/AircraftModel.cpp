@@ -85,7 +85,7 @@ namespace AircraftModel {
 		return Cf_turb;
 	}
 
-	double compute_delta_CD(const double& current_d, const double& current_l,
+	double compute_delta_CD_fuselage(const double& current_d, const double& current_l,
 		const double& next_d, const double& next_l, const double& M, 
 		const double& cruise_h) {
 
@@ -115,4 +115,40 @@ namespace AircraftModel {
 		// Calculate the delta in CD using a 1st order Taylor expansion
 		return delta_t * dC_dt;
 	}
+
+	double breguet_prop_range(const double& eta_prop, const double& BSFC, const double& L_D,
+		const double& w_start, const double& w_end) {
+		// Implements the Breguet Range Equation for prop aircraft, as seen in the following 
+		// link: https://en.wikipedia.org/wiki/Range_(aeronautics)
+		//
+		// The inputs are propulsive efficiency (eta_prop), the Break Specific Fuel Consumption
+		// (BSFC, in Kg/J), the Lift-Over-Drag ratio (L_D, assumed constant throughout the leg),
+		// and the start and end total aircraft weights (w_start and w_end, both with the same 
+		// units).
+		//
+		// The output is the range in m.
+
+		double range = eta_prop / (9.81 * BSFC);
+
+		range = range * L_D * log(w_start / w_end); // log() is actually ln() in C++
+
+		return range;
+	}
+
+	double breguet_prop_wratio(const double& eta_prop, const double& BSFC, const double& L_D,
+		const double& range) {
+		// Implements the Breguet Range Equation for prop aircraft, as seen in the following 
+		// link: https://en.wikipedia.org/wiki/Range_(aeronautics)
+		//
+		// The inputs are propulsive efficiency (eta_prop), the Break Specific Fuel Consumption
+		// (BSFC, in Kg/J), the Lift-Over-Drag ratio (L_D, assumed constant throughout the leg),
+		// and the range (range, in m).
+		//
+		// The output is the ratio of the weight of the aircraft at the start relative to the
+		// end.
+
+		return exp(9.81 * BSFC * range / (L_D * eta_prop));
+	}
+
+
 }
