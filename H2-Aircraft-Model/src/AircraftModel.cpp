@@ -188,4 +188,33 @@ namespace AircraftModel {
 
 	}
 
+	double compute_ground_run_raymer(const double& MTOW, const double& S_wing, const double&
+		sl_rho_ratio, const double& CL_TO, const double& BHP) {
+		// Implements the take-off run estimation from Fig 5.4 in the Raymer book.
+		//
+		// The inputs are "MTOW" in tonnes, the wing area "S_wing" in m^2, the density ratio
+		// relative to sea level "sl_rho_ratio", the take-off lift coefficient "CL_TO" and the
+		// power of the engine in horsepower "BHP". The output "TO_run" is the take-off run in 
+		// km.
+
+		// Compute the take-off parameter
+		double TO_param = (MTOW / S_wing) / (sl_rho_ratio * CL_TO * BHP / MTOW);
+
+		// Check the take-off parameter is within bounds
+		assert(TO_param <= 600);
+		assert(TO_param >= 100);
+
+		// Data from the figure
+		const std::vector<double> TO_param_vec = { 100, 200, 300, 400, 500, 600 };
+		const std::vector<double> run_vals = { 0.2189, 0.4275, 0.6759, 0.9641, 1.2523, 1.5604 };
+
+		// Interpolate between the table points to find the torque fraction and fuel consumption
+		// per engine
+		double TO_run = 0; // in percent
+		MathTools::interpolate_fn(TO_param_vec, run_vals, TO_param, TO_run);
+
+		return TO_run;
+
+	}
+
 }
