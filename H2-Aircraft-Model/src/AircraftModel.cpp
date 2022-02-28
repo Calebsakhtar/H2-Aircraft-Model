@@ -217,4 +217,14 @@ namespace AircraftModel {
 
 	}
 
+	double compute_eta_prop_raymer(const double& thrust, const double& TAS, const double& P) {
+		// Computes the propeller efficiency according to equation (13.15) from Raymer.
+		//
+		// The input "thrust" is the Thrust in kN, the "TAS" is the True Arispeed in m/s, and
+		// "P" is the power in kW. If the thrust of one engine is given, the power given must
+		// also correspond to one engine. The output is the propeller efficiency.
+
+		return thrust * TAS / P;
+	}
+
 }
