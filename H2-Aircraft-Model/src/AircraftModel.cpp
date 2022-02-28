@@ -154,11 +154,15 @@ namespace AircraftModel {
 		// Implements the engine performance table at ISA conditions given in the following link:
 		// https://www.quora.com/At-cruise-speed-do-turboprops-run-at-their-maximal-rated-horse-power-If-not-how-much-less-is-that-given-horse-power-typically
 		//
-		// The input "h" is height in km. The output "PW127_BSFC" is the break-specific fuel
-		// consumption in kg/J.
+		// The input "h" is height in km, which must lie above 2.44 km and below 7.61 km. The 
+		// returned output "PW127_BSFC" is the break-specific fuel consumption in kg/J.
 
-		// Convert the height to FL
+		// Convert the height to flight level
 		const double FL = 3.28084 * h * 10;
+
+		// Check the flight level is reasonable
+		assert(FL <= 250);
+		assert(FL >= 80);
 
 		// The maximum cruise power occurs when the engine is at 82% N2.
 		const double P_cruise_max = 1589.8321; // kW (eq. to 2132 SHP, or 82% of 2750 SHP)
