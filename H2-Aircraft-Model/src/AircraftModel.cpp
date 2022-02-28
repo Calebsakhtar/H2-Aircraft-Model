@@ -150,5 +150,38 @@ namespace AircraftModel {
 		return exp(9.81 * BSFC * range / (L_D * eta_prop));
 	}
 
+	double compute_cruise_BSFC_PW127(const double& h) {
+		// Implements the engine performance table at ISA conditions given in the following link:
+		// https://www.quora.com/At-cruise-speed-do-turboprops-run-at-their-maximal-rated-horse-power-If-not-how-much-less-is-that-given-horse-power-typically
+		//
+		// The input "h" is height in km. The output "PW127_BSFC" is the break-specific fuel
+		// consumption in kg/J.
+
+		// Convert the height to FL
+		const double FL = 3.28084 * h * 10;
+
+		// The maximum cruise power occurs when the engine is at 82% N2.
+		const double P_cruise_max = 1589.8321; // kW (eq. to 2132 SHP, or 82% of 2750 SHP)
+
+		// Data from the table
+		const std::vector<double> FL_vec = 
+			{ 80.0, 100., 120., 140., 160., 180., 200., 220., 240., 250. };
+		const std::vector<double> Torque_percents =
+			{ 94.5, 90.2, 86.1, 82.8, 78.9, 74.2, 68.9, 63.6, 58.3, 55.3 };
+		const std::vector<double> fuel_rates =
+			{ 464., 440., 418., 401., 381., 359., 335., 310., 286., 272. };
+
+		// Interpolate between the table points to find the torque fraction and fuel consumption
+		// per engine
+		double T_frac = 0; // in percent
+		MathTools::interpolate_fn(FL_vec, Torque_percents, FL, T_frac);
+		double fuel_rate = 0; // in kg of fuel/hour/engine
+		MathTools::interpolate_fn(FL_vec, fuel_rates, FL, fuel_rate);
+
+		// Calculate and return the BSFC
+		double PW127_BSFC = fuel_rate/(60 * 60 * T_frac * P_cruise_max * 10);
+		return PW127_BSFC;
+
+	}
 
 }

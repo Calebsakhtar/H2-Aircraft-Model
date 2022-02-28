@@ -51,6 +51,13 @@ namespace AircraftModel {
 	double breguet_prop_wratio(const double& eta_prop, const double& BSFC, const double& L_D,
 		const double& range);
 
+	// Implements the engine performance table at ISA conditions given in the following link:
+	// https://www.quora.com/At-cruise-speed-do-turboprops-run-at-their-maximal-rated-horse-power-If-not-how-much-less-is-that-given-horse-power-typically
+	//
+	// The input "h" is height in km. The output "PW127_BSFC" is the break-specific fuel
+	// consumption in kg/J.
+	double compute_cruise_BSFC_PW127(const double& h);
+
 }
 
 #endif
