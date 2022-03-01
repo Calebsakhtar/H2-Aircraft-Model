@@ -250,4 +250,15 @@ namespace AircraftModel {
 
 		return 796.03 * pow(P_max, -0.136);
 	}
+
+	double compute_new_engine_cruise_BSFC(const double& BSFC_TO, const double& h) {
+		// Performs a simple extrapolation to link the BSFC at TO with the BSFC at the chosen
+		// cruise altitude h (which must be provided in km). Returns the BSFC at cruise with
+		// the same units as the input units of the BSFC.
+
+		const double PW127_BSFC_TO = 279; // g/kWh
+		const double PW127_BSFC_cruise = compute_cruise_BSFC_PW127(h) * 3.6e+9; // g/kWh
+		
+		return BSFC_TO * PW127_BSFC_cruise / PW127_BSFC_TO;
+	}
 }

@@ -93,6 +93,11 @@ namespace AircraftModel {
 	// The input is the maximum power requirement of the engine in kW, and the output is
 	// the likely BSFC in g/kWh.
 	double correl_turboprop_TOBSFC(const double& P_max);
+
+	// Performs a simple extrapolation to link the BSFC at TO with the BSFC at the chosen
+	// cruise altitude h (which must be provided in km). Returns the BSFC at cruise with
+	// the same units as the input units of the BSFC.
+	double compute_new_engine_cruise_BSFC(const double& BSFC_TO, const double& h);
 }
 
 #endif
