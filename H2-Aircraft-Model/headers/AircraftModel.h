@@ -54,6 +54,8 @@ namespace AircraftModel {
 	// Implements the engine performance table at ISA conditions given in the following link:
 	// https://www.quora.com/At-cruise-speed-do-turboprops-run-at-their-maximal-rated-horse-power-If-not-how-much-less-is-that-given-horse-power-typically
 	//
+	// The tables assume a CG location of 25%.
+	// 
 	// The input "h" is height in km, which must lie above 2.44 km and below 7.61 km. The 
 	// returned output "PW127_BSFC" is the break-specific fuel consumption in kg/J.
 	double compute_cruise_BSFC_PW127(const double& h);
@@ -73,6 +75,24 @@ namespace AircraftModel {
 	// "P" is the power in kW. If the thrust of one engine is given, the power given must
 	// also correspond to one engine. The output is the propeller efficiency.
 	double compute_eta_prop_raymer(const double& thrust, const double& TAS, const double& P);
+
+	// Computes the turboprop mass (in kg) for a given max. power requirement by using a
+	// correlation from the data available in the following website under the 
+	// specifications section:
+	// https://en.wikipedia.org/wiki/Pratt_%26_Whitney_Canada_PW100
+	// 
+	// The input is the maximum power requirement of the engine in kW, and the output is
+	// the likely engine mass in kg.
+	double correl_turboprop_mass(const double& P_max);
+
+	// Computes the turboprop Break-Specific Fuel Consumption at T/O for a given 
+	// maximum power requirement by using a correlation from the data available in the 
+	// following website under the specifications section:
+	// https://en.wikipedia.org/wiki/Pratt_%26_Whitney_Canada_PW100
+	// 
+	// The input is the maximum power requirement of the engine in kW, and the output is
+	// the likely BSFC in g/kWh.
+	double correl_turboprop_TOBSFC(const double& P_max);
 }
 
 #endif

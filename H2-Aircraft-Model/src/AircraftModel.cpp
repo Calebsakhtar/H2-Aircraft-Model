@@ -154,6 +154,8 @@ namespace AircraftModel {
 		// Implements the engine performance table at ISA conditions given in the following link:
 		// https://www.quora.com/At-cruise-speed-do-turboprops-run-at-their-maximal-rated-horse-power-If-not-how-much-less-is-that-given-horse-power-typically
 		//
+		// The tables assume a CG location of 25%.
+		// 
 		// The input "h" is height in km, which must lie above 2.44 km and below 7.61 km. The 
 		// returned output "PW127_BSFC" is the break-specific fuel consumption in kg/J.
 
@@ -185,7 +187,6 @@ namespace AircraftModel {
 		// Calculate and return the BSFC
 		double PW127_BSFC = fuel_rate/(60 * 60 * T_frac * P_cruise_max * 10);
 		return PW127_BSFC;
-
 	}
 
 	double compute_ground_run_raymer(const double& MTOW, const double& S_wing, const double&
@@ -214,7 +215,6 @@ namespace AircraftModel {
 		MathTools::interpolate_fn(TO_param_vec, run_vals, TO_param, TO_run);
 
 		return TO_run;
-
 	}
 
 	double compute_eta_prop_raymer(const double& thrust, const double& TAS, const double& P) {
@@ -227,4 +227,27 @@ namespace AircraftModel {
 		return thrust * TAS / P;
 	}
 
+	double correl_turboprop_mass(const double& P_max) {
+		// Computes the turboprop mass (in kg) for a given max. power requirement by using a
+		// correlation from the data available in the following website under the 
+		// specifications section:
+		// https://en.wikipedia.org/wiki/Pratt_%26_Whitney_Canada_PW100
+		// 
+		// The input is the maximum power requirement of the engine in kW, and the output is
+		// the likely engine mass in kg.
+	
+		return 0.1391 * P_max + 200.75;
+	}
+
+	double correl_turboprop_TOBSFC(const double& P_max) {
+		// Computes the turboprop Break-Specific Fuel Consumption at T/O for a given 
+		// maximum power requirement by using a correlation from the data available in the 
+		// following website under the specifications section:
+		// https://en.wikipedia.org/wiki/Pratt_%26_Whitney_Canada_PW100
+		// 
+		// The input is the maximum power requirement of the engine in kW, and the output is
+		// the likely BSFC in g/kWh.
+
+		return 796.03 * pow(P_max, -0.136);
+	}
 }
