@@ -261,4 +261,39 @@ namespace AircraftModel {
 		
 		return BSFC_TO * PW127_BSFC_cruise / PW127_BSFC_TO;
 	}
+
+	double calculate_hybrid_BSFC(const double& H2_frac, const double& h, const double& P_max) {
+		// Given an input hydrogen fraction "H2_frac", a cruise altitude "h" in km, and a 
+		// maximum power output for a single turboprop engine "P_max" in kW, give the hybrid
+		// BSFC for a single engine in kg/J;
+		// 
+		// Specific energy data:
+		//    - JA1: https://en.wikipedia.org/wiki/Jet_fuel
+		//    - H2: https://www.skai.co/hydrogen-details#:~:text=The%20specific%20energy%20of%20hydrogen,lithium%2Dion%20batteries%20(approximately%20
+		//
+		// BSFC Equation: BSFC = Fuel Consumption/Power
+		//                     = ( H2_frac/c_H2 + 1/c_JA1 ) / ( H2_frac + 1 ) / eta_therm
+		//
+		// Please note that in this case "thermal efficiency" is the product of both thermal 
+		// and combustion efficiency.
+	
+		const double c_JA1 = 43.15; // MJ/kg
+		const double c_H2 = 142; // MJ/kg
+
+		// First assume it's all kerosene
+		const double BSFC_JA1_TO = correl_turboprop_TOBSFC(P_max); // g/kWh
+		double BSFC_JA1_cruise = compute_new_engine_cruise_BSFC(BSFC_JA1_TO, h); // g/kWh
+
+		// Convert BSFC from g/kWh to kg/MJ
+		BSFC_JA1_cruise = BSFC_JA1_cruise / ( 3.6 * 1000 );
+
+		// Using the BSFC equation, the thermal efficiency can be computed
+		const double eta_therm = 1 / (BSFC_JA1_cruise * c_JA1);
+
+		// Assuming the thermal efficiency is the same for both fuels, calculate the hybrid BSFC
+		double BSFC_hybrid = (H2_frac/c_H2 + 1/c_JA1) / (H2_frac + 1) / eta_therm;
+
+		// Convert the BSFC from kg/MJ to kg/J and return the result
+		return BSFC_hybrid / (1e6);
+	}
 }

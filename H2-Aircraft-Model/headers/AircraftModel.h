@@ -2,6 +2,7 @@
 #define AIRCRAFT_MODEL_H
 
 #include <math.h>
+#include <fstream>
 
 #include "../headers/MathTools.h"
 
@@ -98,6 +99,23 @@ namespace AircraftModel {
 	// cruise altitude h (which must be provided in km). Returns the BSFC at cruise with
 	// the same units as the input units of the BSFC.
 	double compute_new_engine_cruise_BSFC(const double& BSFC_TO, const double& h);
+
+	// Given an input hydrogen fraction "H2_frac", a cruise altitude "h" in km, and a 
+	// maximum power output for a single turboprop engine "P_max" in kW, give the hybrid
+	// BSFC for a single engine in kg/J;
+	// 
+	// Specific energy data:
+	//    - JA1: https://en.wikipedia.org/wiki/Jet_fuel
+	//    - H2: https://www.skai.co/hydrogen-details#:~:text=The%20specific%20energy%20of%20hydrogen,lithium%2Dion%20batteries%20(approximately%20
+	//
+	// BSFC Equation: BSFC = Fuel Consumption/Power
+	//                     = ( H2_frac/c_H2 + 1/c_JA1 ) / ( H2_frac + 1 ) / eta_therm
+	//
+	// Please note that in this case "thermal efficiency" is the product of both thermal 
+	// and combustion efficiency.
+	double calculate_hybrid_BSFC(const double& H2_frac, const double& h, const double& P_max);
+
+	// void compute_cg_loc_mass(const double& m_engine, const double& H2_frac);
 }
 
 #endif
