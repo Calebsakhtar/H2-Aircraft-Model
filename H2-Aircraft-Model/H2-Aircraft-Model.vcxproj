@@ -142,10 +142,12 @@
     <ClCompile Include="src\AircraftModel.cpp" />
     <ClCompile Include="H2-Aircraft-Model.cpp" />
     <ClCompile Include="src\MathTools.cpp" />
+    <ClCompile Include="src\PlaneMakerTools.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="headers\AircraftModel.h" />
     <ClInclude Include="headers\MathTools.h" />
+    <ClInclude Include="headers\PlaneMakerTools.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

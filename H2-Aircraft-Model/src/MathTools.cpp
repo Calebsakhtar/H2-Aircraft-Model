@@ -13,7 +13,7 @@ namespace MathTools {
 		if (!reverse) {
 			assert(std::is_sorted(x_vals.begin(), x_vals.end())); // Check x vector is sorted
 			assert(x_vals[0] <= input_x); // Assert the input is at least equal to the smallest xval
-			assert(*x_vals.end() >= input_x); // Assert the input does not surpass the largest xval
+			assert(x_vals.back() >= input_x); // Assert the input does not surpass the largest xval
 		}
 
 		// initialize the variable to hold the index 

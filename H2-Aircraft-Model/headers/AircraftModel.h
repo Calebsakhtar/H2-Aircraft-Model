@@ -2,11 +2,19 @@
 #define AIRCRAFT_MODEL_H
 
 #include <math.h>
+#include <fstream>
 
 #include "../headers/MathTools.h"
 
 namespace AircraftModel {
 
+	// ISA Returns the International Standard Atmosphere(ISA) values for ambient
+	// temperature(op_T) in degrees kelvin, speed of sound(op_a) in m / s, pressure
+	// (op_P)in kPa, density(op_rho) in Kg / m ^ 3, and dynamic viscosity (op_visc) 
+	// in Kg/m/s at a given input height in kilometers(ip_h).
+	void ISA(const double& ip_h, double& op_T, double& op_a, double& op_P, double& op_rho,
+		double& op_visc);
+	
 	// Implements equation (15-20) from:
 	// https://www.sciencedirect.com/topics/engineering/friction-drag-coefficient
 	// Which is the equation for a fully turbulent boundary layer over a flat plate
@@ -16,6 +24,113 @@ namespace AircraftModel {
 	// M is the Mach number of the free-stream flow
 	double compute_turb_frict_coeff(const double& Re, const double& M);
 
+	double compute_delta_CD_fuselage(const double& current_d, const double& current_l,
+		const double& next_d, const double& next_l, const double& M,
+		const double& cruise_h);
+
+	// Implements the Breguet Range Equation for prop aircraft, as seen in the following 
+	// link: https://en.wikipedia.org/wiki/Range_(aeronautics)
+	//
+	// The inputs are propulsive efficiency (eta_prop), the Break Specific Fuel Consumption
+	// (BSFC, in Kg/J), the Lift-Over-Drag ratio (L_D, assumed constant throughout the leg),
+	// and the start and end total aircraft weights (w_start and w_end, both with the same 
+	// units).
+	//
+	// The output is the range in m.
+	double breguet_prop_range(const double& eta_prop, const double& BSFC, const double& L_D,
+		const double& w_start, const double& w_end);
+
+	// Implements the Breguet Range Equation for prop aircraft, as seen in the following 
+	// link: https://en.wikipedia.org/wiki/Range_(aeronautics)
+	//
+	// The inputs are propulsive efficiency (eta_prop), the Break Specific Fuel Consumption
+	// (BSFC, in Kg/J), the Lift-Over-Drag ratio (L_D, assumed constant throughout the leg),
+	// and the range (range, in m).
+	//
+	// The output is the ratio of the weight of the aircraft at the start relative to the
+	// end.
+	double breguet_prop_wratio(const double& eta_prop, const double& BSFC, const double& L_D,
+		const double& range);
+
+	// Implements the engine performance table at ISA conditions given in the following link:
+	// https://www.quora.com/At-cruise-speed-do-turboprops-run-at-their-maximal-rated-horse-power-If-not-how-much-less-is-that-given-horse-power-typically
+	//
+	// The tables assume a CG location of 25%.
+	// 
+	// The input "h" is height in km, which must lie above 2.44 km and below 7.61 km. The 
+	// returned output "PW127_BSFC" is the break-specific fuel consumption in kg/J.
+	double compute_cruise_BSFC_PW127(const double& h);
+
+	// Implements the take-off run estimation from Fig 5.4 in the Raymer book.
+	//
+	// The inputs are "MTOW" in tonnes, the wing area "S_wing" in m^2, the density ratio
+	// relative to sea level "sl_rho_ratio", the take-off lift coefficient "CL_TO" and the
+	// power of the engine in horsepower "BHP". The output "TO_run" is the take-off run in 
+	// km.
+	double compute_ground_run_raymer(const double& MTOW, const double& S_wing, const double&
+		sl_rho_ratio, const double& CL_TO, const double& BHP);
+
+	// Computes the propeller efficiency according to equation (13.15) from Raymer.
+	//
+	// The input "thrust" is the Thrust in kN, the "TAS" is the True Arispeed in m/s, and
+	// "P" is the power in kW. If the thrust of one engine is given, the power given must
+	// also correspond to one engine. The output is the propeller efficiency.
+	double compute_eta_prop_raymer(const double& thrust, const double& TAS, const double& P);
+
+	// Computes the turboprop mass (in kg) for a given max. power requirement by using a
+	// correlation from the data available in the following website under the 
+	// specifications section:
+	// https://en.wikipedia.org/wiki/Pratt_%26_Whitney_Canada_PW100
+	// 
+	// The input is the maximum power requirement of the engine in kW, and the output is
+	// the likely engine mass in kg.
+	double correl_turboprop_mass(const double& P_max);
+
+	// Computes the turboprop Break-Specific Fuel Consumption at T/O for a given 
+	// maximum power requirement by using a correlation from the data available in the 
+	// following website under the specifications section:
+	// https://en.wikipedia.org/wiki/Pratt_%26_Whitney_Canada_PW100
+	// 
+	// The input is the maximum power requirement of the engine in kW, and the output is
+	// the likely BSFC in g/kWh.
+	double correl_turboprop_TOBSFC(const double& P_max);
+
+	// Performs a simple extrapolation to link the BSFC at TO with the BSFC at the chosen
+	// cruise altitude h (which must be provided in km). Returns the BSFC at cruise with
+	// the same units as the input units of the BSFC.
+	double compute_new_engine_cruise_BSFC(const double& BSFC_TO, const double& h);
+
+	// Given an input hydrogen fraction "H2_frac", a cruise altitude "h" in km, and a 
+	// maximum power output for a single turboprop engine "P_max" in kW, give the hybrid
+	// BSFC for a single engine in kg/J;
+	// 
+	// Specific energy data:
+	//    - JA1: https://en.wikipedia.org/wiki/Jet_fuel
+	//    - H2: https://www.skai.co/hydrogen-details#:~:text=The%20specific%20energy%20of%20hydrogen,lithium%2Dion%20batteries%20(approximately%20
+	//
+	// BSFC Equation: BSFC = Fuel Consumption/Power
+	//                     = ( H2_frac/c_H2 + 1/c_JA1 ) / ( H2_frac + 1 ) / eta_therm
+	//
+	// Please note that in this case "thermal efficiency" is the product of both thermal 
+	// and combustion efficiency.
+	double calculate_hybrid_BSFC(const double& H2_frac, const double& h, const double& P_max);
+
+	// Compute the total mass "op_calc_mass" in kg, the centre of gravity location "op_cg_loc"
+	// in m, the payload mass "op_payload". It also states whether the volume and mass
+	// constraints have been violated in "op_vio_vol" and "op_vio_mass" respectively.
+	// 
+	// The inputs are the mass of the engine "ip_M_engine" in kg, the ip TOTAL fuel mass 
+	// "ip_M_fuel" in kg, and the H2 power fraction "ip_H2_frac" (power of hydrogen divided 
+	// by power of kerosene).
+	//
+	// To compute the masses, first the volume of hydrogen needed is considered and the
+	// remaining payload (to reach MTOW) is packed in the remaining space. This allows for the
+	// aircraft to have a total mass that is LESS THAN MTOW, meaning that THIS FUNCTION NEEDS
+	// TO BE ITERATED to achieve concordance to the payload fraction assumed in breguet and the
+	// output of this program.
+	bool compute_cg_loc_mass(const double& ip_M_engine, const double& ip_M_fuel,
+		const double& ip_H2_frac, double& op_cg_loc, double& op_calc_mass, double& op_payload,
+		bool& op_vio_mass, bool& op_vio_vol);
 }
 
 #endif
