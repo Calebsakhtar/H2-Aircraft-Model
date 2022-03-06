@@ -115,7 +115,22 @@ namespace AircraftModel {
 	// and combustion efficiency.
 	double calculate_hybrid_BSFC(const double& H2_frac, const double& h, const double& P_max);
 
-	// void compute_cg_loc_mass(const double& m_engine, const double& H2_frac);
+	// Compute the total mass "op_calc_mass" in kg, the centre of gravity location "op_cg_loc"
+	// in m, the payload mass "op_payload". It also states whether the volume and mass
+	// constraints have been violated in "op_vio_vol" and "op_vio_mass" respectively.
+	// 
+	// The inputs are the mass of the engine "ip_M_engine" in kg, the ip TOTAL fuel mass 
+	// "ip_M_fuel" in kg, and the H2 power fraction "ip_H2_frac" (power of hydrogen divided 
+	// by power of kerosene).
+	//
+	// To compute the masses, first the volume of hydrogen needed is considered and the
+	// remaining payload (to reach MTOW) is packed in the remaining space. This allows for the
+	// aircraft to have a total mass that is LESS THAN MTOW, meaning that THIS FUNCTION NEEDS
+	// TO BE ITERATED to achieve concordance to the payload fraction assumed in breguet and the
+	// output of this program.
+	bool compute_cg_loc_mass(const double& ip_M_engine, const double& ip_M_fuel,
+		const double& ip_H2_frac, double& op_cg_loc, double& op_calc_mass, double& op_payload,
+		bool& op_vio_mass, bool& op_vio_vol);
 }
 
 #endif
