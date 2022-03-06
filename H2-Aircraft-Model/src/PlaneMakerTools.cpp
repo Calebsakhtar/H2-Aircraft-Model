@@ -4,6 +4,10 @@ namespace PlaneMakerTools {
 
 	size_t find_line(const std::string& line, const std::string& acf_filepath, 
 		std::vector<std::string>& file_lines) {
+		// Find the earliest line in the file from the filepath that constains the
+		// string line. In the arguments, this function returns ALL lines of the
+		// specified files as well. The output of this function is the index of the
+		// line where the "line" input string is located.
 	
 		// Open the file containing the designs
 		std::ifstream acf_file(acf_filepath);
@@ -48,6 +52,9 @@ namespace PlaneMakerTools {
 
 	void write_line(const size_t& idx, const std::string& line, std::vector<std::string> acf_lines,
 		const std::string& acf_filepath) {
+		// Given a string "line", a list of lines "acf_lines", and a corresponsing index "idx", this
+		// function replaces the "idx"-th member of "acf_lines" with lines and writes it to the file 
+		// given by the "acf_filepath".
 	
 		// Replace the line in the file with the new line
 		acf_lines[idx] = line;
@@ -66,6 +73,8 @@ namespace PlaneMakerTools {
 	}
 
 	void write_quantity(const double& quantity, std::string line, const std::string& filepath) {
+		// Writes a "quantity" to its corresponding "line" in the X-Plane acf file located in
+		// "filepath".
 
 		// Initialise vector to hold file lines
 		std::vector<std::string> file_lines;
@@ -82,7 +91,11 @@ namespace PlaneMakerTools {
 
 	void set_weight_data(const double& x_CG_nofuel, const double& M_nofuel, 
 		const std::string& acf_filepath) {
-		// Input x_CG in m from the nose, input M_nofuel in kg
+		// Writes the relevant weight and balance data to the X-Plane acf file.
+		// The inputs have the following details:
+		// 
+		//	- x_CG in m from the nose,
+		//	- M_nofuel in kg
 	
 		const double x_origin = 10.505; // ft
 		const double m_to_ft = 3.28084;
@@ -105,7 +118,11 @@ namespace PlaneMakerTools {
 
 	void set_engine_data(const double& ip_BSFC_full, const double& ip_BSFC_full_low, const double& P_max,
 		const std::string& acf_filepath) {
-		// Input BSFC in kg/J, input P_max in kW
+		// Writes the relevant engine data to the X-Plane acf file.
+		// The inputs have the following details:
+		// 
+		//	- All SFCs in kg/J, 
+		//	- P_max in kW
 
 		const double J_to_hp_hr = 3.725061361111e-7;
 		const double kg_to_lb = 2.20462;
@@ -143,9 +160,12 @@ namespace PlaneMakerTools {
 
 	void set_fuel_data(double M_fuel, double x_h2_tanks, const double& H2_M_prop, 
 		const std::string& acf_filepath) {
-		// M_fuel is in kg
-		// H2_M_prop ranges from 0 to 1
-		// x_h2_tanks is in meters
+		// Writes the relevant fuel and tank data to the X-Plane acf file.
+		// The inputs have the following details:
+		// 
+		//	 - M_fuel is in kg
+		//	 - H2_M_prop ranges from 0 to 1
+		//   - x_h2_tanks is in m, measured from the nose
 
 		const double x_origin = 10.505; // ft
 		const double m_to_ft = 3.28084;
