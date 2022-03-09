@@ -299,12 +299,13 @@ namespace AircraftModel {
 
 	bool compute_cg_loc_mass(const double& ip_M_engine, const double& ip_M_fuel, 
 		const double& ip_H2_frac, double& op_cg_loc, double& op_calc_mass, double& op_cg_loc_nofuel, 
-		double& op_calc_mass_nofuel, double& op_payload, bool& op_vio_mass, bool& op_vio_vol) {
+		double& op_calc_mass_nofuel, double& op_payload, double& op_M_JA1, bool& op_vio_mass, 
+		bool& op_vio_vol) {
 		// Compute the total mass "op_calc_mass" in kg, the centre of gravity location "op_cg_loc"
 		// in m, the payload mass "op_payload". It also states whether the volume and mass
 		// constraints have been violated in "op_vio_vol" and "op_vio_mass" respectively. The nofuel
 		// version of the outputs are those which assume a zero-fuel aircraft (they still include the
-		// mass of hydrogen tanks).
+		// mass of hydrogen tanks). The mass of kerosene "op_M_JA1" in kg is also given.
 		// 
 		// The inputs are the mass of the engine "ip_M_engine" in kg, the ip TOTAL fuel mass 
 		// "ip_M_fuel" in kg, and the H2 power fraction "ip_H2_frac" (power of hydrogen divided 
@@ -359,6 +360,7 @@ namespace AircraftModel {
 		// Calculate the amount of kerosene and hydrogen
 		const double M_JA1 = ip_M_fuel / (ip_H2_frac * c_JA1 / c_H2 + 1); // kg
 		const double M_H2 = M_JA1 * ip_H2_frac * c_JA1 / c_H2; // kg
+		op_M_JA1 = M_JA1;
 
 		// Account for the kerosene
 		CG_product += M_JA1 * x_CG_JA1;
