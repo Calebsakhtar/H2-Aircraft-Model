@@ -326,7 +326,7 @@ namespace AircraftModel {
 		op_vio_vol = true;
 
 		// Initialize aircraft constants
-		const double MTOW = 22800; // kg
+		const double MTOW = 22000; // kg
 		const double M_empty = 13500; // kg
 		const double x_CG_empty = 12.202; // m
 		const double x_CG_JA1 = 12.203; // m

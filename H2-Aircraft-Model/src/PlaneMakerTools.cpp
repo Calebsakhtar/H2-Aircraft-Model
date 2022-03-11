@@ -1,4 +1,5 @@
 #include "../headers/PlaneMakerTools.h"
+#include <iostream>
 
 namespace PlaneMakerTools {
 
@@ -12,9 +13,6 @@ namespace PlaneMakerTools {
 		// Open the file containing the designs
 		std::ifstream acf_file(acf_filepath);
 
-		// Initialise a string to store the lines in
-		std::string temp_line;
-
 		// Make a vector to store the lines
 		std::vector<std::string> acf_lines;
 
@@ -22,28 +20,39 @@ namespace PlaneMakerTools {
 		size_t i = 0;
 		size_t idx = 0;
 
-		// Read all lines
-		while (std::getline(acf_file, temp_line)) {
-			
-			acf_lines.push_back(temp_line);
+		// Check whether the file is open
+		if (acf_file.is_open()) {
 
-			// If we haven't found a match before, try to match
-			if (idx == 0) {
-				size_t temp_idx = temp_line.find(line);
-				
-				// If a match is found, store the current line index
-				if (temp_idx != std::string::npos)
-				{
-					idx = i;
+			// Initialise a string to store the lines in
+			std::string temp_line;
+
+			// Read all lines
+			while (std::getline(acf_file, temp_line)) {
+
+				acf_lines.push_back(temp_line);
+
+				// If we haven't found a match before, try to match
+				if (idx == 0) {
+					size_t temp_idx = temp_line.find(line);
+
+					// If a match is found, store the current line index
+					if (temp_idx != std::string::npos)
+					{
+						idx = i;
+					}
 				}
+
+				// Increment the indez
+				i++;
 			}
 
-			// Increment the indez
-			i++;
+			// Close the design file and clear the relevant vectors
+			acf_file.close();
 		}
-
-		// Close the design file and clear the relevant vectors
-		acf_file.close();
+		else {
+		
+			std::cout << "\nUNABLE TO OPEN ACF FILE\n";
+		}
 
 		file_lines = acf_lines;
 
@@ -82,8 +91,11 @@ namespace PlaneMakerTools {
 		// Find the index of the desired line
 		const size_t line_idx = find_line(line, filepath, file_lines);
 
+		// Quantity to float
+		float quant_f = static_cast<float>(quantity);
+		
 		// Add the new quantity value to the BSFC line
-		line += std::to_string(quantity);
+		line += std::to_string(quant_f);
 
 		// Write the BSFC data
 		write_line(line_idx, line, file_lines, filepath);
@@ -126,7 +138,8 @@ namespace PlaneMakerTools {
 
 		const double J_to_hp_hr = 3.725061361111e-7;
 		const double kg_to_lb = 2.20462;
-		const double high_to_low = 42/53;
+		const double high_to_low = 42./53.;
+		const double kW_to_HP = 1.34102;
 
 		// Convert BSFC to lb/hp*hr
 		const double BSFC_full = ip_BSFC_full * kg_to_lb / J_to_hp_hr;
@@ -135,7 +148,7 @@ namespace PlaneMakerTools {
 		const double BSFC_half_low = BSFC_full_low * high_to_low;
 
 		// Convert power to hp
-		const double P_max_hp = P_max * J_to_hp_hr * 1000;
+		const double P_max_hp = P_max * kW_to_HP;
 
 		// BSFC_full High Altitude
 		const std::string BSFC_full_line = "P acf/_SFC_full_hi_PRP ";
@@ -179,15 +192,15 @@ namespace PlaneMakerTools {
 		const double JA1_M_prop_single = 0.5 * (1 - H2_M_prop);
 
 		// Tank 0 (Kerosene) Proportion
-		const std::string tank0_line = "acf/_tank_rat/0 ";
+		const std::string tank0_line = "P acf/_tank_rat/0 ";
 		write_quantity(JA1_M_prop_single, tank0_line, acf_filepath);
 
 		// Tank 1 (Kerosene) Proportion
-		const std::string tank1_line = "acf/_tank_rat/1 ";
+		const std::string tank1_line = "P acf/_tank_rat/1 ";
 		write_quantity(JA1_M_prop_single, tank1_line, acf_filepath);
 
 		// Tank 2 (LH2) Proportion
-		const std::string tank2_line = "acf/_tank_rat/2 ";
+		const std::string tank2_line = "P acf/_tank_rat/2 ";
 		write_quantity(H2_M_prop, tank2_line, acf_filepath);
 
 		// Tank 2 Lateral Locations
