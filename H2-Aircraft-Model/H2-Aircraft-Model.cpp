@@ -12,7 +12,7 @@ int main()
     std::string acf_filepath =
         "D:\\Games\\X-Plane 11\\Aircraft\\Extra Aircraft\\ATR72-500\\ATR72.acf";
 
-    PlaneMakerTools::set_weight_data(120, 120, acf_filepath);
+    PlaneMakerTools::set_engine_data(0, 0, 0, acf_filepath);
 
     double y = AircraftModel::compute_cruise_BSFC_PW127(5);
     y = y * 3.6e+9;
