@@ -201,9 +201,9 @@ namespace AircraftModel {
 		// Compute the take-off parameter
 		double TO_param = (MTOW / S_wing) / (sl_rho_ratio * CL_TO * BHP / MTOW);
 
-		// Check the take-off parameter is within bounds
-		assert(TO_param <= 600);
-		assert(TO_param >= 100);
+		//// Check the take-off parameter is within bounds
+		//assert(TO_param <= 600);
+		//assert(TO_param >= 100);
 
 		// Data from the figure
 		const std::vector<double> TO_param_vec = { 100, 200, 300, 400, 500, 600 };
@@ -322,8 +322,8 @@ namespace AircraftModel {
 		op_cg_loc = 0;
 		op_calc_mass = 0;
 		op_payload = 0;
-		op_vio_mass = true;
-		op_vio_vol = true;
+		op_vio_mass = false;
+		op_vio_vol = false;
 
 		// Initialize aircraft constants
 		const double MTOW = 22000; // kg
