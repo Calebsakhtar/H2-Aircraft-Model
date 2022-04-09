@@ -68,6 +68,78 @@ namespace AircraftModel {
 		}
 	}
 
+	double TAS_to_IAS(const double& TAS, const double& h) {
+		// Calculates the IAS from the TAS and the altitude h
+		// 
+		// Input TAS must be in m/s
+		// Input h must be in km
+		// Output IAS is in m/s
+		// This function adapts the following website:
+		// https://aerotoolbox.com/airspeed-conversions/
+
+		// Initialize the outputs from ISA
+		double T = 0;
+		double a = 0;
+		double P = 0;
+		double rho = 0;
+		double visc = 0;
+
+		// Gamma Air
+		double gamma = 1.4;
+		const double rho_sl = 1.225;
+		
+		// Initialize the function output
+		double IAS = 0;
+
+		// Compute the atmospheric parameters
+		ISA(h, T, a, P, rho, visc);
+
+		// Compute the IAS
+		const double M = TAS / a;
+		const double P0_P = pow(1 + (gamma - 1) * M * M / 2, gamma / (gamma - 1));
+
+		IAS = sqrt(2 * P * 1000 * (P0_P - 1) / rho_sl);
+
+		return IAS;
+	}
+
+	double IAS_to_TAS(const double& IAS, const double& h) {
+		// Calculates the TAS from the IAS and the altitude h
+		// 
+		// Input IAS must be in m/s
+		// Input h must be in km
+		// Output TAS is in m/s
+		//
+		// This function adapts the following website:
+		// https://aerotoolbox.com/airspeed-conversions/
+
+
+		// Initialize the outputs from ISA
+		double T = 0;
+		double a = 0;
+		double P = 0;
+		double rho = 0;
+		double visc = 0;
+
+		// Gamma Air
+		double gamma = 1.4;
+		const double rho_sl = 1.225;
+
+		// Initialize the function output
+		double TAS = 0;
+
+		// Compute the atmospheric parameters
+		ISA(h, T, a, P, rho, visc);
+
+		// Compute the TAS
+		TAS = 0.5 * rho_sl * IAS * IAS / (P * 1000) + 1;
+		TAS = pow(TAS, (gamma - 1) / gamma);
+		TAS = 2 * (TAS - 1) / (gamma - 1);
+		TAS = a * sqrt(TAS);
+
+		return TAS;
+	}
+
 	double compute_turb_frict_coeff(const double& Re, const double& M) {
 		// Implements equation (15-20) from:
 		// https://www.sciencedirect.com/topics/engineering/friction-drag-coefficient
