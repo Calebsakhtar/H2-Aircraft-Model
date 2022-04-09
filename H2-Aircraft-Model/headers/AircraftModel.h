@@ -15,6 +15,26 @@ namespace AircraftModel {
 	void ISA(const double& ip_h, double& op_T, double& op_a, double& op_P, double& op_rho,
 		double& op_visc);
 	
+	// Calculates the IAS from the TAS and the altitude h
+	// 
+	// Input TAS must be in m/s
+	// Input h must be in km
+	// Output IAS is in m/s
+	// 
+	// This function adapts the following website:
+	// https://aerotoolbox.com/airspeed-conversions/
+	double TAS_to_IAS(const double& TAS, const double& h);
+
+	// Calculates the TAS from the IAS and the altitude h
+	// 
+	// Input IAS must be in m/s
+	// Input h must be in km
+	// Output TAS is in m/s
+	// 
+	// This function adapts the following website:
+	// https://aerotoolbox.com/airspeed-conversions/
+	double IAS_to_TAS(const double& IAS, const double& h);
+		
 	// Implements equation (15-20) from:
 	// https://www.sciencedirect.com/topics/engineering/friction-drag-coefficient
 	// Which is the equation for a fully turbulent boundary layer over a flat plate
