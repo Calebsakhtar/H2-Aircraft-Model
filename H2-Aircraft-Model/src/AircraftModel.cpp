@@ -369,10 +369,10 @@ namespace AircraftModel {
 		return BSFC_hybrid / (1e6);
 	}
 
-	bool compute_cg_loc_mass(const double& ip_M_engine, const double& ip_M_fuel, 
-		const double& ip_H2_frac, double& op_cg_loc, double& op_calc_mass, double& op_cg_loc_nofuel, 
-		double& op_calc_mass_nofuel, double& op_payload, double& op_M_JA1, bool& op_vio_mass, 
-		bool& op_vio_vol) {
+	bool compute_cg_loc_mass(const double& ip_M_engine, const double& ip_M_fuel,
+		const double& ip_H2_frac, double& op_cg_loc, double& op_calc_mass, double& op_cg_loc_nofuel,
+		double& op_calc_mass_nofuel, double& op_payload, double& op_M_JA1, double& op_num_pass,
+		double& op_tank_l, bool& op_vio_mass, bool& op_vio_vol) {
 		// Compute the total mass "op_calc_mass" in kg, the centre of gravity location "op_cg_loc"
 		// in m, the payload mass "op_payload". It also states whether the volume and mass
 		// constraints have been violated in "op_vio_vol" and "op_vio_mass" respectively. The nofuel
@@ -406,15 +406,17 @@ namespace AircraftModel {
 		const double x_CG_cargo_front = 4.192; //m
 		const double M_cargo_rear_max = 637; // kg
 		const double x_CG_cargo_rear = 21.4555; // m
-		const double pass_packing_density = 431.55; // kg/m
+		const double pass_packing_density = 429.02; // kg/m
+		const double x_per_row = 12.84 / 17. ; // m
+		double M_pass_total = 0.; //kg
 
 		// Initialize engine constants
 		const double M_PW127 = 480; // kg
 		const double x_CG_engine = 10.63; // m
 
 		// Initialize fuel constants
-		const double c_JA1 = 43.15; // MJ/kg
-		const double c_H2 = 142; // MJ/kg
+		const double c_JA1 = 43.0; // MJ/kg
+		const double c_H2 = 121.09; // MJ/kg
 		const double rho_H2 = 67.3; // kg/m^3
 		const double tank_eta = 0.63; // H2 kg req / system kg
 		const double c = 1.121; // m of effective tank radius
@@ -516,7 +518,7 @@ namespace AircraftModel {
 		const double M_pass_max1 = x_avail_payload1 * pass_packing_density;
 		const double x_avail_payload2 = 19.2426 - x_CG_empty - l_tank / 2; // 19.2426 is the end
 																		   // coord of the plane
-		const double M_pass_max2 = x_avail_payload1 * pass_packing_density;
+		const double M_pass_max2 = x_avail_payload2 * pass_packing_density;
 		const double M_pass_max = M_pass_max1 + M_pass_max2;
 			
 		// Fill out the rear cabin first since it's larger
@@ -526,11 +528,13 @@ namespace AircraftModel {
 			// Account for the front cargo compartment
 			CG_product += M_pass_max2 * x_CG_payload2;
 			M_total += M_pass_max2;
+			M_pass_total += M_pass_max2;
 		}
 		else {
 			// Put all the remaining payload in the front cargo compartment 
 			CG_product += M_pay_remaining * x_CG_payload2;
 			M_total += M_pay_remaining;
+			M_pass_total += M_pay_remaining;
 			
 			op_payload = M_total - M_empty - delta_M_engines - M_H2_system - M_JA1;
 			op_calc_mass = M_total;
@@ -549,13 +553,17 @@ namespace AircraftModel {
 			// Account for the front cargo compartment
 			CG_product += M_pass_max1 * x_CG_payload1;
 			M_total += M_pass_max1;
+			M_pass_total += M_pass_max1;
 		}
 		else {
 			// Put all the remaining payload in the front cargo compartment 
 			CG_product += M_pay_remaining * x_CG_payload1;
 			M_total += M_pay_remaining;
+			M_pass_total += M_pay_remaining;
 		}
 
+		op_tank_l = l_tank;
+		op_num_pass = floor(M_pass_total / 80.);
 		op_payload = M_total - M_empty - delta_M_engines - M_H2_system - M_JA1;
 		op_calc_mass = M_total;
 		op_cg_loc = CG_product / M_total;
