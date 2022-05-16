@@ -152,8 +152,8 @@ namespace AircraftModel {
 	// output of this program.
 	bool compute_cg_loc_mass(const double& ip_M_engine, const double& ip_M_fuel,
 		const double& ip_H2_frac, double& op_cg_loc, double& op_calc_mass, double& op_cg_loc_nofuel,
-		double& op_calc_mass_nofuel, double& op_payload, double& op_M_JA1, double& op_num_pass, bool& op_vio_mass,
-		bool& op_vio_vol);
+		double& op_calc_mass_nofuel, double& op_payload, double& op_M_JA1, double& op_num_pass,
+		double& op_tank_l, bool& op_vio_mass, bool& op_vio_vol);
 }
 
 #endif

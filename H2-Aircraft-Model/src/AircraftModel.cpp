@@ -369,10 +369,10 @@ namespace AircraftModel {
 		return BSFC_hybrid / (1e6);
 	}
 
-	bool compute_cg_loc_mass(const double& ip_M_engine, const double& ip_M_fuel, 
-		const double& ip_H2_frac, double& op_cg_loc, double& op_calc_mass, double& op_cg_loc_nofuel, 
-		double& op_calc_mass_nofuel, double& op_payload, double& op_M_JA1, double& op_num_pass, bool& op_vio_mass,
-		bool& op_vio_vol) {
+	bool compute_cg_loc_mass(const double& ip_M_engine, const double& ip_M_fuel,
+		const double& ip_H2_frac, double& op_cg_loc, double& op_calc_mass, double& op_cg_loc_nofuel,
+		double& op_calc_mass_nofuel, double& op_payload, double& op_M_JA1, double& op_num_pass,
+		double& op_tank_l, bool& op_vio_mass, bool& op_vio_vol) {
 		// Compute the total mass "op_calc_mass" in kg, the centre of gravity location "op_cg_loc"
 		// in m, the payload mass "op_payload". It also states whether the volume and mass
 		// constraints have been violated in "op_vio_vol" and "op_vio_mass" respectively. The nofuel
@@ -562,6 +562,7 @@ namespace AircraftModel {
 			M_pass_total += M_pay_remaining;
 		}
 
+		op_tank_l = l_tank;
 		op_num_pass = floor(M_pass_total / 80.);
 		op_payload = M_total - M_empty - delta_M_engines - M_H2_system - M_JA1;
 		op_calc_mass = M_total;
