@@ -509,7 +509,7 @@ namespace AircraftModel {
 		}
 
 		// Fill out the cabin with the remaining payload
-		const double l_tank = (Vol_H2sys - 4 * 3.14159265358979323846 * pow(c, 3)) /
+		const double l_tank = (Vol_H2sys - 4 * 3.14159265358979323846 * pow(c, 3)/3 ) /
 			(3.14159265358979323846 * pow(c, 2)) + 2 * c;
 		const double x_CG_payload1 = 5.86/2 + x_CG_empty/2 - l_tank / 4;
 		const double x_CG_payload2 = 19.2426 / 2 + x_CG_empty / 2 + l_tank / 4;
