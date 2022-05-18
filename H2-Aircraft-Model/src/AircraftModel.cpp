@@ -415,7 +415,7 @@ namespace AircraftModel {
 		op_payload = 0.;
 		op_num_pax = 1;
 		op_M_JA1 = 0;
-		op_M_sys_H2 = 0;
+		op_M_H2_net = 0;
 		op_vio_mass = false;
 		op_vio_vol = false;
 
