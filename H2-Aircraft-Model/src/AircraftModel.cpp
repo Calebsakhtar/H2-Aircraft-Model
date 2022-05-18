@@ -466,54 +466,11 @@ namespace AircraftModel {
 			op_vio_mass = false;
 		}
 
-		// First, fill out the rear cargo compartment
-		if (M_pay_remaining >= M_cargo_rear_max) {
-			M_pay_remaining += -M_cargo_rear_max;
-
-			// Account for the rear cargo compartment
-			CG_product += M_cargo_rear_max * x_CG_cargo_rear;
-			M_total += M_cargo_rear_max;
-		}
-		else {
-			// Put all the remaining payload in the rear cargo compartment 
-			CG_product += M_pay_remaining * x_CG_cargo_rear;
-			M_total += M_pay_remaining;
-			
-			op_payload = M_total - M_empty - delta_M_engines - M_H2_system - M_JA1;
-			op_calc_mass = M_total;
-			op_cg_loc = CG_product / M_total;
-				
-			return true;
-		}
-
-		// Secondly, fill out the front cargo compartment
-		if (M_pay_remaining >= M_cargo_front_max) {
-			M_pay_remaining += -M_cargo_front_max;
-
-			// Account for the front cargo compartment
-			CG_product += M_cargo_front_max * x_CG_cargo_front;
-			M_total += M_cargo_front_max;
-		}
-		else {
-			// Put all the remaining payload in the front cargo compartment 
-			CG_product += M_pay_remaining * x_CG_cargo_front;
-			M_total += M_pay_remaining;
-
-			op_num_pass = floor(M_pass_total / 80.);
-			op_payload = M_total - M_empty - delta_M_engines - M_H2_system - M_JA1;
-			op_calc_mass = M_total;
-			op_cg_loc = CG_product / M_total;
-			op_calc_mass_nofuel = M_total - M_JA1 - M_H2;
-			op_cg_loc_nofuel = (CG_product - M_JA1 * x_CG_JA1 - M_H2 * x_CG_empty) 
-				/ op_calc_mass_nofuel;
-
-			return true;
-		}
-
+		// Calculate the constraining volume
 		const double min_h2_vol = 4. * 3.14159265358979323846 * pow(c, 3.) / 3.;
 		double l_tank = 0.;
 
-		//std::cout << "\n" << (Vol_H2sys - min_h2_vol) << "\n";
+		std::cout << "\n" << (Vol_H2sys - min_h2_vol) << "\n";
 
 		// If the volume of the tank is below that of the max. sphere, decrease the size of the sphere
 		if (Vol_H2sys < min_h2_vol) {
@@ -523,10 +480,10 @@ namespace AircraftModel {
 			l_tank = (Vol_H2sys - 4. * 3.14159265358979323846 * pow(c, 3.) / 3.) /
 				(3.14159265358979323846 * pow(c, 2.)) + 2. * c;
 		}
-		//std::cout << l_tank << "\n";
-		
+		std::cout << l_tank << "\n";
+
 		// Fill out the cabin with the remaining payload
-		const double x_CG_payload1 = 5.86/2. + x_CG_empty/2. - l_tank / 4.;
+		const double x_CG_payload1 = 5.86 / 2. + x_CG_empty / 2. - l_tank / 4.;
 		const double x_CG_payload2 = 19.2426 / 2. + x_CG_empty / 2. + l_tank / 4.;
 		const double x_avail_payload1 = x_CG_empty - 5.86 - l_tank / 2.; // 5.86 is the front start
 																		// of the aircraft
@@ -535,12 +492,12 @@ namespace AircraftModel {
 																		   // coord of the plane
 		const double M_pass_max2 = x_avail_payload2 * pass_packing_density;
 		const double M_pass_max = M_pass_max1 + M_pass_max2;
-			
+
 		// Fill out the rear cabin first since it's larger
 		if (M_pay_remaining >= M_pass_max2) {
 			M_pay_remaining += -M_pass_max2;
 
-			// Account for the front cargo compartment
+			// Account for the rear cabin mass
 			CG_product += M_pass_max2 * x_CG_payload2;
 			M_total += M_pass_max2;
 			M_pass_total += M_pass_max2;
@@ -550,7 +507,7 @@ namespace AircraftModel {
 			CG_product += M_pay_remaining * x_CG_payload2;
 			M_total += M_pay_remaining;
 			M_pass_total += M_pay_remaining;
-			
+
 			op_tank_l = l_tank;
 			op_num_pass = floor(M_pass_total / 80.);
 			op_payload = M_total - M_empty - delta_M_engines - M_H2_system - M_JA1;
@@ -567,16 +524,66 @@ namespace AircraftModel {
 		if (M_pay_remaining >= M_pass_max1) {
 			M_pay_remaining += -M_pass_max1;
 
-			// Account for the front cargo compartment
+			// Account for the front passengers
 			CG_product += M_pass_max1 * x_CG_payload1;
 			M_total += M_pass_max1;
 			M_pass_total += M_pass_max1;
 		}
 		else {
-			// Put all the remaining payload in the front cargo compartment 
+			// Put all the remaining passengers in the front cargo compartment 
 			CG_product += M_pay_remaining * x_CG_payload1;
 			M_total += M_pay_remaining;
 			M_pass_total += M_pay_remaining;
+
+			op_tank_l = l_tank;
+			op_num_pass = floor(M_pass_total / 80.);
+			op_payload = M_total - M_empty - delta_M_engines - M_H2_system - M_JA1;
+			op_calc_mass = M_total;
+			op_cg_loc = CG_product / M_total;
+			op_calc_mass_nofuel = M_total - M_JA1 - M_H2;
+			op_cg_loc_nofuel = (CG_product - M_JA1 * x_CG_JA1 - M_H2 * x_CG_empty)
+				/ op_calc_mass_nofuel;
+
+			return true;
+		}
+
+		// First, fill out the rear cargo compartment
+		if (M_pay_remaining >= M_cargo_rear_max) {
+			M_pay_remaining += -M_cargo_rear_max;
+
+			// Account for the rear cargo compartment
+			CG_product += M_cargo_rear_max * x_CG_cargo_rear;
+			M_total += M_cargo_rear_max;
+		}
+		else {
+			// Put all the remaining payload in the rear cargo compartment 
+			CG_product += M_pay_remaining * x_CG_cargo_rear;
+			M_total += M_pay_remaining;
+			
+			op_tank_l = l_tank;
+			op_num_pass = floor(M_pass_total / 80.);
+			op_payload = M_total - M_empty - delta_M_engines - M_H2_system - M_JA1;
+			op_calc_mass = M_total;
+			op_cg_loc = CG_product / M_total;
+			op_calc_mass_nofuel = M_total - M_JA1 - M_H2;
+			op_cg_loc_nofuel = (CG_product - M_JA1 * x_CG_JA1 - M_H2 * x_CG_empty)
+				/ op_calc_mass_nofuel;
+
+			return true;
+		}
+
+		// Secondly, fill out the front cargo compartment
+		if (M_pay_remaining >= M_cargo_front_max) {
+			M_pay_remaining += -M_cargo_front_max;
+
+			// Account for the front cargo compartment
+			CG_product += M_cargo_front_max * x_CG_cargo_front;
+			M_total += M_cargo_front_max;
+		}
+		else {
+			// Put all the remaining payload in the front cargo compartment 
+			CG_product += M_pay_remaining * x_CG_cargo_front;
+			M_total += M_pay_remaining;
 		}
 
 		op_tank_l = l_tank;
