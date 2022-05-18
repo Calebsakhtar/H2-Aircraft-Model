@@ -1,6 +1,5 @@
 
 #include "../headers/AircraftModel.h"
-#include <iostream>
 
 namespace AircraftModel {
 
@@ -370,9 +369,29 @@ namespace AircraftModel {
 		return BSFC_hybrid / (1e6);
 	}
 
+	int compute_num_seats(const double& H2_tank_len, const double& H2_pfrac) {
+		// Compute the number of passengers by considering the number of rows occupied by the tanks.
+		// The "H2_tank_len" input should be in meters.
+
+		int num_pax = 68;
+		int pax_per_row = 4;
+		double len_row = 0.748; //m
+
+		if (H2_pfrac < 1e-3 || H2_tank_len < 1e-3) {
+			return num_pax;
+		}
+		else {
+			int num_rows_taken = ceil(H2_tank_len/len_row);
+
+			num_pax += -pax_per_row * num_rows_taken;
+
+			return num_pax;
+		}
+	}
+
 	bool compute_cg_loc_mass(const double& ip_M_engine, const double& ip_M_fuel,
 		const double& ip_H2_frac, double& op_cg_loc, double& op_calc_mass, double& op_cg_loc_nofuel,
-		double& op_calc_mass_nofuel, double& op_payload, double& op_M_JA1, double& op_num_pass,
+		double& op_calc_mass_nofuel, double& op_payload, double& op_M_JA1, int& op_num_pax,
 		double& op_tank_l, bool& op_vio_mass, bool& op_vio_vol) {
 		// Compute the total mass "op_calc_mass" in kg, the centre of gravity location "op_cg_loc"
 		// in m, the payload mass "op_payload". It also states whether the volume and mass
@@ -481,6 +500,9 @@ namespace AircraftModel {
 				(3.14159265358979323846 * pow(c, 2.)) + 2. * c;
 		}
 
+		// Compute the number of seats available
+		const int num_seats = compute_num_seats(l_tank, ip_H2_frac);
+
 		// DEBUG: const double Vol_H2sys2 = M_H2 / rho_H2_tank ; // m^3
 		// DEBUG: std::cout << "\n" << "Difference in Volumes: " << Vol_H2sys - Vol_H2sys2 << "\n";
 		// DEBUG: std::cout << (Vol_H2sys - min_h2_vol) << "\n";
@@ -513,7 +535,7 @@ namespace AircraftModel {
 			M_pass_total += M_pay_remaining;
 
 			op_tank_l = l_tank;
-			op_num_pass = floor(M_pass_total / 80.);
+			op_num_pax = std::min(static_cast<int>(floor(M_pass_total / 80.)), num_seats);
 			op_payload = M_total - M_empty - delta_M_engines - M_H2_system - M_JA1;
 			op_calc_mass = M_total;
 			op_cg_loc = CG_product / M_total;
@@ -540,7 +562,7 @@ namespace AircraftModel {
 			M_pass_total += M_pay_remaining;
 
 			op_tank_l = l_tank;
-			op_num_pass = floor(M_pass_total / 80.);
+			op_num_pax = std::min(static_cast<int>(floor(M_pass_total / 80.)), num_seats);
 			op_payload = M_total - M_empty - delta_M_engines - M_H2_system - M_JA1;
 			op_calc_mass = M_total;
 			op_cg_loc = CG_product / M_total;
@@ -565,7 +587,7 @@ namespace AircraftModel {
 			M_total += M_pay_remaining;
 			
 			op_tank_l = l_tank;
-			op_num_pass = floor(M_pass_total / 80.);
+			op_num_pax = std::min(static_cast<int>(floor(M_pass_total / 80.)), num_seats);
 			op_payload = M_total - M_empty - delta_M_engines - M_H2_system - M_JA1;
 			op_calc_mass = M_total;
 			op_cg_loc = CG_product / M_total;
@@ -591,7 +613,7 @@ namespace AircraftModel {
 		}
 
 		op_tank_l = l_tank;
-		op_num_pass = floor(M_pass_total / 80.);
+		op_num_pax = std::min(static_cast<int>(floor(M_pass_total / 80.)), num_seats);
 		op_payload = M_total - M_empty - delta_M_engines - M_H2_system - M_JA1;
 		op_calc_mass = M_total;
 		op_cg_loc = CG_product / M_total;
