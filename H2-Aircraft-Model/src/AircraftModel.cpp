@@ -349,8 +349,8 @@ namespace AircraftModel {
 		// Please note that in this case "thermal efficiency" is the product of both thermal 
 		// and combustion efficiency.
 	
-		const double c_JA1 = 43.15; // MJ/kg
-		const double c_H2 = 142.; // MJ/kg
+		const double c_JA1 = 43.0; // MJ/kg (specific energy = LCV)
+		const double c_H2 = 121.1; // MJ/kg (specific energy)
 
 		// First assume it's all kerosene
 		const double BSFC_JA1_TO = correl_turboprop_TOBSFC(P_max); // g/kWh
@@ -414,6 +414,7 @@ namespace AircraftModel {
 		op_cg_loc = 0.;
 		op_calc_mass = 0.;
 		op_payload = 0.;
+		op_num_pax = 1;
 		op_vio_mass = false;
 		op_vio_vol = false;
 
@@ -427,7 +428,8 @@ namespace AircraftModel {
 		const double M_cargo_rear_max = 637.; // kg
 		const double x_CG_cargo_rear = 21.4555; // m
 		const double pass_packing_density = 429.02; // kg/m
-		const double x_per_row = 12.84 / 17. ; // m
+		const double x_per_row = 0.748; // m
+		const double mass_per_pax = 80.; // kg
 		double M_pass_total = 0.; //kg
 
 		// Initialize engine constants
@@ -500,42 +502,22 @@ namespace AircraftModel {
 				(3.14159265358979323846 * pow(c, 2.)) + 2. * c;
 		}
 
-		// Compute the number of seats available
+		// Set the output
+		op_tank_l = l_tank;
+
+		// Compute the number of seats available and the total mass these passengers will have
 		const int num_seats = compute_num_seats(l_tank, ip_H2_frac);
+		const int max_pass_mass = num_seats * mass_per_pax;
 
-		// DEBUG: const double Vol_H2sys2 = M_H2 / rho_H2_tank ; // m^3
-		// DEBUG: std::cout << "\n" << "Difference in Volumes: " << Vol_H2sys - Vol_H2sys2 << "\n";
-		// DEBUG: std::cout << (Vol_H2sys - min_h2_vol) << "\n";
-		// DEBUG: std::cout << l_tank << "\n";
-
-		// Fill out the cabin with the remaining payload
-		const double x_CG_payload1 = 5.86 / 2. + x_CG_empty / 2. - l_tank / 4.;
-		const double x_CG_payload2 = 19.2426 / 2. + x_CG_empty / 2. + l_tank / 4.;
-		const double x_avail_payload1 = x_CG_empty - 5.86 - l_tank / 2.; // 5.86 is the front start
-																		// of the aircraft
-		const double M_pass_max1 = x_avail_payload1 * pass_packing_density;
-		const double x_avail_payload2 = 19.2426 - x_CG_empty - l_tank / 2.; // 19.2426 is the end
-																		   // coord of the plane
-		const double M_pass_max2 = x_avail_payload2 * pass_packing_density;
-		const double M_pass_max = M_pass_max1 + M_pass_max2;
-
-		// Fill out the rear cabin first since it's larger
-		if (M_pay_remaining >= M_pass_max2) {
-			M_pay_remaining += -M_pass_max2;
-
-			// Account for the rear cabin mass
-			CG_product += M_pass_max2 * x_CG_payload2;
-			M_total += M_pass_max2;
-			M_pass_total += M_pass_max2;
-		}
-		else {
-			// Put all the remaining payload in the front cargo compartment 
-			CG_product += M_pay_remaining * x_CG_payload2;
+		// Distribute all of the passengers symetrically across both cabins (the centre of the cabin is the
+		// empty cg)
+		if (max_pass_mass >= M_pay_remaining) {
+			
+			CG_product += M_pay_remaining * x_CG_empty;
 			M_total += M_pay_remaining;
 			M_pass_total += M_pay_remaining;
 
-			op_tank_l = l_tank;
-			op_num_pax = std::min(static_cast<int>(floor(M_pass_total / 80.)), num_seats);
+			op_num_pax = static_cast<int>(floor(M_pay_remaining / mass_per_pax));
 			op_payload = M_total - M_empty - delta_M_engines - M_H2_system - M_JA1;
 			op_calc_mass = M_total;
 			op_cg_loc = CG_product / M_total;
@@ -544,37 +526,19 @@ namespace AircraftModel {
 				/ op_calc_mass_nofuel;
 
 			return true;
-		}
 
-		// Then fill out the front cabin 
-		if (M_pay_remaining >= M_pass_max1) {
-			M_pay_remaining += -M_pass_max1;
-
-			// Account for the front passengers
-			CG_product += M_pass_max1 * x_CG_payload1;
-			M_total += M_pass_max1;
-			M_pass_total += M_pass_max1;
 		}
 		else {
-			// Put all the remaining passengers in the front cargo compartment 
-			CG_product += M_pay_remaining * x_CG_payload1;
-			M_total += M_pay_remaining;
-			M_pass_total += M_pay_remaining;
+			// Distribute all of the passengers symetrically across both cabins
+			CG_product += max_pass_mass * x_CG_empty;
+			M_total += max_pass_mass;
+			M_pay_remaining += -max_pass_mass;
 
-			op_tank_l = l_tank;
-			op_num_pax = std::min(static_cast<int>(floor(M_pass_total / 80.)), num_seats);
-			op_payload = M_total - M_empty - delta_M_engines - M_H2_system - M_JA1;
-			op_calc_mass = M_total;
-			op_cg_loc = CG_product / M_total;
-			op_calc_mass_nofuel = M_total - M_JA1 - M_H2;
-			op_cg_loc_nofuel = (CG_product - M_JA1 * x_CG_JA1 - M_H2 * x_CG_empty)
-				/ op_calc_mass_nofuel;
-
-			return true;
+			op_num_pax = num_seats;
 		}
 
-		// First, fill out the rear cargo compartment
-		if (M_pay_remaining >= M_cargo_rear_max) {
+		// Now, fill out the rear cargo compartment
+		if (M_pay_remaining > M_cargo_rear_max) {
 			M_pay_remaining += -M_cargo_rear_max;
 
 			// Account for the rear cargo compartment
@@ -586,8 +550,7 @@ namespace AircraftModel {
 			CG_product += M_pay_remaining * x_CG_cargo_rear;
 			M_total += M_pay_remaining;
 			
-			op_tank_l = l_tank;
-			op_num_pax = std::min(static_cast<int>(floor(M_pass_total / 80.)), num_seats);
+			
 			op_payload = M_total - M_empty - delta_M_engines - M_H2_system - M_JA1;
 			op_calc_mass = M_total;
 			op_cg_loc = CG_product / M_total;
@@ -612,8 +575,6 @@ namespace AircraftModel {
 			M_total += M_pay_remaining;
 		}
 
-		op_tank_l = l_tank;
-		op_num_pax = std::min(static_cast<int>(floor(M_pass_total / 80.)), num_seats);
 		op_payload = M_total - M_empty - delta_M_engines - M_H2_system - M_JA1;
 		op_calc_mass = M_total;
 		op_cg_loc = CG_product / M_total;
