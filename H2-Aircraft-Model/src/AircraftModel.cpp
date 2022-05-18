@@ -344,9 +344,8 @@ namespace AircraftModel {
 		//    - H2: https://www.skai.co/hydrogen-details#:~:text=The%20specific%20energy%20of%20hydrogen,lithium%2Dion%20batteries%20(approximately%20
 		//
 		// BSFC Equation: BSFC = Fuel Consumption/Power
-		//                     = ( H2_frac/c_H2 + 1/c_JA1 ) / ( H2_frac + 1 ) / eta_therm
 		//
-		// Please note that in this case "thermal efficiency" is the product of both thermal 
+		// Please note that in this case "thermal efficiency" is the product of both cycle
 		// and combustion efficiency.
 	
 		const double c_JA1 = 43.0; // MJ/kg (specific energy = LCV)
@@ -363,7 +362,7 @@ namespace AircraftModel {
 		const double eta_therm = 1. / (BSFC_JA1_cruise * c_JA1);
 
 		// Assuming the thermal efficiency is the same for both fuels, calculate the hybrid BSFC
-		double BSFC_hybrid = (H2_frac/c_H2 + 1./c_JA1) / (H2_frac + 1.) / eta_therm;
+		double BSFC_hybrid = (H2_frac/c_H2 + (1 - H2_frac)/c_JA1) / eta_therm;
 
 		// Convert the BSFC from kg/MJ to kg/J and return the result
 		return BSFC_hybrid / (1e6);
@@ -438,7 +437,7 @@ namespace AircraftModel {
 
 		// Initialize fuel constants
 		const double c_JA1 = 43.0; // MJ/kg
-		const double c_H2 = 121.09; // MJ/kg
+		const double c_H2 = 121.1; // MJ/kg
 		const double rho_H2_tank = 67.3; // kg/m^3 https://www.mdpi.com/1996-1073/11/1/105
 		const double rho_H2_l = 70.8; // kg/m^3
 		const double rho_H2_g = rho_H2_l / 5.6; // kg/m^3 https://www.mdpi.com/1996-1073/11/1/105
@@ -456,8 +455,8 @@ namespace AircraftModel {
 		M_total += delta_M_engines;
 
 		// Calculate the amount of kerosene and hydrogen
-		const double M_JA1 = ip_M_fuel / (ip_H2_frac * c_JA1 / c_H2 + 1.); // kg
-		const double M_H2 = ip_M_fuel - M_JA1; // kg
+		const double M_H2 = ip_M_fuel / (1. + (c_H2/c_JA1) * (1./ip_H2_frac - 1.)); // kg
+		const double M_JA1 = ip_M_fuel - M_H2; // kg
 		op_M_JA1 = M_JA1;
 
 		// Account for the kerosene
