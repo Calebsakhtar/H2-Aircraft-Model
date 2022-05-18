@@ -390,7 +390,7 @@ namespace AircraftModel {
 
 	bool compute_cg_loc_mass(const double& ip_M_engine, const double& ip_M_fuel,
 		const double& ip_H2_frac, double& op_cg_loc, double& op_calc_mass, double& op_cg_loc_nofuel,
-		double& op_calc_mass_nofuel, double& op_payload, double& op_M_JA1, int& op_num_pax,
+		double& op_calc_mass_nofuel, double& op_payload, double& op_M_JA1, double & op_M_H2_net, int& op_num_pax,
 		double& op_tank_l, bool& op_vio_mass, bool& op_vio_vol) {
 		// Compute the total mass "op_calc_mass" in kg, the centre of gravity location "op_cg_loc"
 		// in m, the payload mass "op_payload". It also states whether the volume and mass
@@ -414,6 +414,8 @@ namespace AircraftModel {
 		op_calc_mass = 0.;
 		op_payload = 0.;
 		op_num_pax = 1;
+		op_M_JA1 = 0;
+		op_M_sys_H2 = 0;
 		op_vio_mass = false;
 		op_vio_vol = false;
 
@@ -466,6 +468,7 @@ namespace AircraftModel {
 		// Calculate the volume and mass of the H2 system, and account for it
 		const double Vol_H2sys = M_H2 / (rho_H2_tank - rho_H2_g) * (1. - rho_H2_g/ rho_H2_l); // m^3
 		const double M_H2_system = M_H2 / tank_eta; // kg
+		op_M_H2_net = Vol_H2sys * rho_H2_tank; //kg
 		CG_product += M_H2_system * x_CG_empty;
 		M_total += M_H2_system;
 
