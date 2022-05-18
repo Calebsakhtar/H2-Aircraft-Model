@@ -1,5 +1,6 @@
 
 #include "../headers/AircraftModel.h"
+#include <iostream>
 
 namespace AircraftModel {
 
@@ -19,11 +20,11 @@ namespace AircraftModel {
 		const double visc_sl = 1.789e-5;
 
 		// Set the output quantities to equal to 0 (as initialization)
-		op_T = 0;
-		op_a = 0;
-		op_P = 0;
-		op_rho = 0;
-		op_visc = 0;
+		op_T = 0.;
+		op_a = 0.;
+		op_P = 0.;
+		op_rho = 0.;
+		op_visc = 0.;
 
 		if (ip_h <= 0) {
 			// Set the output quantities to equal to the sea level amount if below sea level
@@ -78,27 +79,27 @@ namespace AircraftModel {
 		// https://aerotoolbox.com/airspeed-conversions/
 
 		// Initialize the outputs from ISA
-		double T = 0;
-		double a = 0;
-		double P = 0;
-		double rho = 0;
-		double visc = 0;
+		double T = 0.;
+		double a = 0.;
+		double P = 0.;
+		double rho = 0.;
+		double visc = 0.;
 
 		// Gamma Air
 		double gamma = 1.4;
 		const double rho_sl = 1.225;
 		
 		// Initialize the function output
-		double IAS = 0;
+		double IAS = 0.;
 
 		// Compute the atmospheric parameters
 		ISA(h, T, a, P, rho, visc);
 
 		// Compute the IAS
 		const double M = TAS / a;
-		const double P0_P = pow(1 + (gamma - 1) * M * M / 2, gamma / (gamma - 1));
+		const double P0_P = pow(1 + (gamma - 1) * M * M / 2., gamma / (gamma - 1));
 
-		IAS = sqrt(2 * P * 1000 * (P0_P - 1) / rho_sl);
+		IAS = sqrt(2 * P * 1000. * (P0_P - 1) / rho_sl);
 
 		return IAS;
 	}
@@ -115,24 +116,24 @@ namespace AircraftModel {
 
 
 		// Initialize the outputs from ISA
-		double T = 0;
-		double a = 0;
-		double P = 0;
-		double rho = 0;
-		double visc = 0;
+		double T = 0.;
+		double a = 0.;
+		double P = 0.;
+		double rho = 0.;
+		double visc = 0.;
 
 		// Gamma Air
 		double gamma = 1.4;
 		const double rho_sl = 1.225;
 
 		// Initialize the function output
-		double TAS = 0;
+		double TAS = 0.;
 
 		// Compute the atmospheric parameters
 		ISA(h, T, a, P, rho, visc);
 
 		// Compute the TAS
-		TAS = 0.5 * rho_sl * IAS * IAS / (P * 1000) + 1;
+		TAS = 0.5 * rho_sl * IAS * IAS / (P * 1000.) + 1;
 		TAS = pow(TAS, (gamma - 1) / gamma);
 		TAS = 2 * (TAS - 1) / (gamma - 1);
 		TAS = a * sqrt(TAS);
@@ -178,7 +179,7 @@ namespace AircraftModel {
 
 		// Compute the gradient of the Fuselage Skin Drag Coefficient
 		double current_t = current_d / current_l;
-		double dC_dt = Cf * (-pow(current_t, -2) - 0.05 * pow(current_t, -3) + 60);
+		double dC_dt = Cf * (-pow(current_t, -2) - 0.05 * pow(current_t, -3) + 60.);
 
 		// Calculate change in the tube fineness ratio
 		double next_t = next_d/next_l;
@@ -232,7 +233,7 @@ namespace AircraftModel {
 		// returned output "PW127_BSFC" is the break-specific fuel consumption in kg/J.
 
 		// Convert the height to flight level
-		const double FL = 3.28084 * h * 10;
+		const double FL = 3.28084 * h * 10.;
 
 		// Check the flight level is reasonable
 		assert(FL <= 250);
@@ -251,13 +252,13 @@ namespace AircraftModel {
 
 		// Interpolate between the table points to find the torque fraction and fuel consumption
 		// per engine
-		double T_frac = 0; // in percent
+		double T_frac = 0.; // in percent
 		MathTools::interpolate_fn(FL_vec, Torque_percents, FL, T_frac);
-		double fuel_rate = 0; // in kg of fuel/hour/engine
+		double fuel_rate = 0.; // in kg of fuel/hour/engine
 		MathTools::interpolate_fn(FL_vec, fuel_rates, FL, fuel_rate);
 
 		// Calculate and return the BSFC
-		double PW127_BSFC = fuel_rate/(60 * 60 * T_frac * P_cruise_max * 10);
+		double PW127_BSFC = fuel_rate/(60. * 60. * T_frac * P_cruise_max * 10.);
 		return PW127_BSFC;
 	}
 
@@ -278,12 +279,12 @@ namespace AircraftModel {
 		//assert(TO_param >= 100);
 
 		// Data from the figure
-		const std::vector<double> TO_param_vec = { 100, 200, 300, 400, 500, 600 };
+		const std::vector<double> TO_param_vec = { 100., 200., 300., 400., 500., 600. };
 		const std::vector<double> run_vals = { 0.2189, 0.4275, 0.6759, 0.9641, 1.2523, 1.5604 };
 
 		// Interpolate between the table points to find the torque fraction and fuel consumption
 		// per engine
-		double TO_run = 0; // in percent
+		double TO_run = 0.; // in percent
 		MathTools::interpolate_fn(TO_param_vec, run_vals, TO_param, TO_run);
 
 		return TO_run;
@@ -328,7 +329,7 @@ namespace AircraftModel {
 		// cruise altitude h (which must be provided in km). Returns the BSFC at cruise with
 		// the same units as the input units of the BSFC.
 
-		const double PW127_BSFC_TO = 279; // g/kWh
+		const double PW127_BSFC_TO = 279.; // g/kWh
 		const double PW127_BSFC_cruise = compute_cruise_BSFC_PW127(h) * 3.6e+9; // g/kWh
 		
 		return BSFC_TO * PW127_BSFC_cruise / PW127_BSFC_TO;
@@ -350,14 +351,14 @@ namespace AircraftModel {
 		// and combustion efficiency.
 	
 		const double c_JA1 = 43.15; // MJ/kg
-		const double c_H2 = 142; // MJ/kg
+		const double c_H2 = 142.; // MJ/kg
 
 		// First assume it's all kerosene
 		const double BSFC_JA1_TO = correl_turboprop_TOBSFC(P_max); // g/kWh
 		double BSFC_JA1_cruise = compute_new_engine_cruise_BSFC(BSFC_JA1_TO, h); // g/kWh
 
 		// Convert BSFC from g/kWh to kg/MJ
-		BSFC_JA1_cruise = BSFC_JA1_cruise / ( 3.6 * 1000 );
+		BSFC_JA1_cruise = BSFC_JA1_cruise / ( 3.6 * 1000. );
 
 		// Using the BSFC equation, the thermal efficiency can be computed
 		const double eta_therm = 1 / (BSFC_JA1_cruise * c_JA1);
@@ -398,20 +399,20 @@ namespace AircraftModel {
 		op_vio_vol = false;
 
 		// Initialize aircraft constants
-		const double MTOW = 22000; // kg
-		const double M_empty = 13500; // kg
+		const double MTOW = 22000.; // kg
+		const double M_empty = 13500.; // kg
 		const double x_CG_empty = 12.202; // m
 		const double x_CG_JA1 = 12.203; // m
-		const double M_cargo_front_max = 928; // kg
+		const double M_cargo_front_max = 928.; // kg
 		const double x_CG_cargo_front = 4.192; //m
-		const double M_cargo_rear_max = 637; // kg
+		const double M_cargo_rear_max = 637.; // kg
 		const double x_CG_cargo_rear = 21.4555; // m
 		const double pass_packing_density = 429.02; // kg/m
 		const double x_per_row = 12.84 / 17. ; // m
 		double M_pass_total = 0.; //kg
 
 		// Initialize engine constants
-		const double M_PW127 = 480; // kg
+		const double M_PW127 = 480.; // kg
 		const double x_CG_engine = 10.63; // m
 
 		// Initialize fuel constants
@@ -427,7 +428,7 @@ namespace AircraftModel {
 		double M_total = M_empty;
 
 		// Account for the different engine
-		const double delta_M_engines = 2 * ( ip_M_engine - M_PW127 ); // kg
+		const double delta_M_engines = 2. * ( ip_M_engine - M_PW127 ); // kg
 		CG_product += delta_M_engines * x_CG_engine;
 		M_total += delta_M_engines;
 
@@ -458,7 +459,7 @@ namespace AircraftModel {
 		double M_pay_remaining = MTOW - M_total;
 		op_payload = M_pay_remaining;
 
-		if (M_pay_remaining <= 0) {
+		if (M_pay_remaining <= 0.) {
 			op_vio_mass = true;
 		}
 		else {
@@ -498,6 +499,7 @@ namespace AircraftModel {
 			CG_product += M_pay_remaining * x_CG_cargo_front;
 			M_total += M_pay_remaining;
 
+			op_num_pass = floor(M_pass_total / 80.);
 			op_payload = M_total - M_empty - delta_M_engines - M_H2_system - M_JA1;
 			op_calc_mass = M_total;
 			op_cg_loc = CG_product / M_total;
@@ -508,15 +510,28 @@ namespace AircraftModel {
 			return true;
 		}
 
+		const double min_h2_vol = 4. * 3.14159265358979323846 * pow(c, 3.) / 3.;
+		double l_tank = 0.;
+
+		//std::cout << "\n" << (Vol_H2sys - min_h2_vol) << "\n";
+
+		// If the volume of the tank is below that of the max. sphere, decrease the size of the sphere
+		if (Vol_H2sys < min_h2_vol) {
+			l_tank = 2 * pow(3. * Vol_H2sys / (4. * 3.14159265358979323846), 1. / 3.);
+		}
+		else {
+			l_tank = (Vol_H2sys - 4. * 3.14159265358979323846 * pow(c, 3.) / 3.) /
+				(3.14159265358979323846 * pow(c, 2.)) + 2. * c;
+		}
+		//std::cout << l_tank << "\n";
+		
 		// Fill out the cabin with the remaining payload
-		const double l_tank = (Vol_H2sys - 4 * 3.14159265358979323846 * pow(c, 3)/3 ) /
-			(3.14159265358979323846 * pow(c, 2)) + 2 * c;
-		const double x_CG_payload1 = 5.86/2 + x_CG_empty/2 - l_tank / 4;
-		const double x_CG_payload2 = 19.2426 / 2 + x_CG_empty / 2 + l_tank / 4;
-		const double x_avail_payload1 = x_CG_empty - 5.86 - l_tank / 2; // 5.86 is the front start
+		const double x_CG_payload1 = 5.86/2. + x_CG_empty/2. - l_tank / 4.;
+		const double x_CG_payload2 = 19.2426 / 2. + x_CG_empty / 2. + l_tank / 4.;
+		const double x_avail_payload1 = x_CG_empty - 5.86 - l_tank / 2.; // 5.86 is the front start
 																		// of the aircraft
 		const double M_pass_max1 = x_avail_payload1 * pass_packing_density;
-		const double x_avail_payload2 = 19.2426 - x_CG_empty - l_tank / 2; // 19.2426 is the end
+		const double x_avail_payload2 = 19.2426 - x_CG_empty - l_tank / 2.; // 19.2426 is the end
 																		   // coord of the plane
 		const double M_pass_max2 = x_avail_payload2 * pass_packing_density;
 		const double M_pass_max = M_pass_max1 + M_pass_max2;
@@ -536,6 +551,8 @@ namespace AircraftModel {
 			M_total += M_pay_remaining;
 			M_pass_total += M_pay_remaining;
 			
+			op_tank_l = l_tank;
+			op_num_pass = floor(M_pass_total / 80.);
 			op_payload = M_total - M_empty - delta_M_engines - M_H2_system - M_JA1;
 			op_calc_mass = M_total;
 			op_cg_loc = CG_product / M_total;
