@@ -152,10 +152,10 @@ namespace AircraftModel {
 	// aircraft to have a total mass that is LESS THAN MTOW, meaning that THIS FUNCTION NEEDS
 	// TO BE ITERATED to achieve concordance to the payload fraction assumed in breguet and the
 	// output of this program.
-	bool compute_cg_loc_mass(const double& ip_M_engine, const double& ip_M_fuel,
-		const double& ip_H2_frac, double& op_cg_loc, double& op_calc_mass, double& op_cg_loc_nofuel,
-		double& op_calc_mass_nofuel, double& op_payload, double& op_M_JA1, int& op_num_pax,
-		double& op_tank_l, bool& op_vio_mass, bool& op_vio_vol);
+	bool compute_cg_loc_mass(const double& ip_M_engine, const double& ip_M_fuel, const double& ip_H2_frac,
+		double& op_cg_loc, double& op_calc_mass, double& op_cg_loc_nofuel, double& op_calc_mass_nofuel,
+		double& op_payload, double& op_M_JA1, double& op_M_H2_net, int& op_num_pax, double& op_tank_l,
+		bool& op_vio_mass, bool& op_vio_vol);
 }
 
 #endif
