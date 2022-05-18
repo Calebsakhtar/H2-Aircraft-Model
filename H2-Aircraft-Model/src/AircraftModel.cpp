@@ -37,9 +37,9 @@ namespace AircraftModel {
 		else {
 
 			// Initialize the temperature ratio
-			double T_ratio = 1;
+			double T_ratio = 1.;
 
-			if (ip_h < 11) {
+			if (ip_h < 11.) {
 				// Calculate ISA values below the tropopause
 				op_T = 288.15 - 6.5 * ip_h;
 				T_ratio = op_T / T_sl;
@@ -97,9 +97,9 @@ namespace AircraftModel {
 
 		// Compute the IAS
 		const double M = TAS / a;
-		const double P0_P = pow(1 + (gamma - 1) * M * M / 2., gamma / (gamma - 1));
+		const double P0_P = pow(1. + (gamma - 1.) * M * M / 2., gamma / (gamma - 1.));
 
-		IAS = sqrt(2 * P * 1000. * (P0_P - 1) / rho_sl);
+		IAS = sqrt(2. * P * 1000. * (P0_P - 1.) / rho_sl);
 
 		return IAS;
 	}
@@ -133,9 +133,9 @@ namespace AircraftModel {
 		ISA(h, T, a, P, rho, visc);
 
 		// Compute the TAS
-		TAS = 0.5 * rho_sl * IAS * IAS / (P * 1000.) + 1;
-		TAS = pow(TAS, (gamma - 1) / gamma);
-		TAS = 2 * (TAS - 1) / (gamma - 1);
+		TAS = 0.5 * rho_sl * IAS * IAS / (P * 1000.) + 1.;
+		TAS = pow(TAS, (gamma - 1.) / gamma);
+		TAS = 2. * (TAS - 1.) / (gamma - 1.);
 		TAS = a * sqrt(TAS);
 
 		return TAS;
@@ -153,7 +153,7 @@ namespace AircraftModel {
 		double Cf_turb = 0.455;
 
 		Cf_turb = Cf_turb / pow(log10(Re), 2.58);
-		Cf_turb = Cf_turb / pow(1 + 0.144 * M * M, 0.65);
+		Cf_turb = Cf_turb / pow(1. + 0.144 * M * M, 0.65);
 
 		return Cf_turb;
 	}
@@ -163,11 +163,11 @@ namespace AircraftModel {
 		const double& cruise_h) {
 
 		// Calculate ISA values
-		double T = 0;
-		double a = 0;
-		double P = 0;
-		double rho = 0;
-		double visc = 0;
+		double T = 0.;
+		double a = 0.;
+		double P = 0.;
+		double rho = 0.;
+		double visc = 0.;
 		ISA(cruise_h, T, a, P, rho, visc);
 
 		// Calculate TAS and the Reynolds number
@@ -179,7 +179,7 @@ namespace AircraftModel {
 
 		// Compute the gradient of the Fuselage Skin Drag Coefficient
 		double current_t = current_d / current_l;
-		double dC_dt = Cf * (-pow(current_t, -2) - 0.05 * pow(current_t, -3) + 60.);
+		double dC_dt = Cf * (-pow(current_t, -2.) - 0.05 * pow(current_t, -3.) + 60.);
 
 		// Calculate change in the tube fineness ratio
 		double next_t = next_d/next_l;
@@ -236,8 +236,8 @@ namespace AircraftModel {
 		const double FL = 3.28084 * h * 10.;
 
 		// Check the flight level is reasonable
-		assert(FL <= 250);
-		assert(FL >= 80);
+		assert(FL <= 250.);
+		assert(FL >= 80.);
 
 		// The maximum cruise power occurs when the engine is at 82% N2.
 		const double P_cruise_max = 1589.8321; // kW (eq. to 2132 SHP, or 82% of 2750 SHP)
@@ -361,10 +361,10 @@ namespace AircraftModel {
 		BSFC_JA1_cruise = BSFC_JA1_cruise / ( 3.6 * 1000. );
 
 		// Using the BSFC equation, the thermal efficiency can be computed
-		const double eta_therm = 1 / (BSFC_JA1_cruise * c_JA1);
+		const double eta_therm = 1. / (BSFC_JA1_cruise * c_JA1);
 
 		// Assuming the thermal efficiency is the same for both fuels, calculate the hybrid BSFC
-		double BSFC_hybrid = (H2_frac/c_H2 + 1/c_JA1) / (H2_frac + 1) / eta_therm;
+		double BSFC_hybrid = (H2_frac/c_H2 + 1./c_JA1) / (H2_frac + 1.) / eta_therm;
 
 		// Convert the BSFC from kg/MJ to kg/J and return the result
 		return BSFC_hybrid / (1e6);
@@ -392,9 +392,9 @@ namespace AircraftModel {
 
 
 		// Initialise all outputs
-		op_cg_loc = 0;
-		op_calc_mass = 0;
-		op_payload = 0;
+		op_cg_loc = 0.;
+		op_calc_mass = 0.;
+		op_payload = 0.;
 		op_vio_mass = false;
 		op_vio_vol = false;
 
@@ -418,7 +418,9 @@ namespace AircraftModel {
 		// Initialize fuel constants
 		const double c_JA1 = 43.0; // MJ/kg
 		const double c_H2 = 121.09; // MJ/kg
-		const double rho_H2 = 67.3; // kg/m^3
+		const double rho_H2_tank = 67.3; // kg/m^3 https://www.mdpi.com/1996-1073/11/1/105
+		const double rho_H2_l = 70.8; // kg/m^3
+		const double rho_H2_g = rho_H2_l / 5.6; // kg/m^3 https://www.mdpi.com/1996-1073/11/1/105
 		const double tank_eta = 0.63; // H2 kg req / system kg
 		const double c = 1.121; // m of effective tank radius
 		const double tank_vol_max = 47.11; //m^3 (in order to keep CG at same location as empty aircraft)
@@ -433,8 +435,8 @@ namespace AircraftModel {
 		M_total += delta_M_engines;
 
 		// Calculate the amount of kerosene and hydrogen
-		const double M_JA1 = ip_M_fuel / (ip_H2_frac * c_JA1 / c_H2 + 1); // kg
-		const double M_H2 = M_JA1 * ip_H2_frac * c_JA1 / c_H2; // kg
+		const double M_JA1 = ip_M_fuel / (ip_H2_frac * c_JA1 / c_H2 + 1.); // kg
+		const double M_H2 = ip_M_fuel - M_JA1; // kg
 		op_M_JA1 = M_JA1;
 
 		// Account for the kerosene
@@ -442,7 +444,7 @@ namespace AircraftModel {
 		M_total += M_JA1;
 
 		// Calculate the volume and mass of the H2 system, and account for it
-		const double Vol_H2sys = M_H2 / rho_H2; // m^3
+		const double Vol_H2sys = M_H2 / (rho_H2_tank - rho_H2_g) * (1. - rho_H2_g/ rho_H2_l); // m^3
 		const double M_H2_system = M_H2 / tank_eta; // kg
 		CG_product += M_H2_system * x_CG_empty;
 		M_total += M_H2_system;
@@ -468,9 +470,7 @@ namespace AircraftModel {
 
 		// Calculate the constraining volume
 		const double min_h2_vol = 4. * 3.14159265358979323846 * pow(c, 3.) / 3.;
-		double l_tank = 0.;
-
-		std::cout << "\n" << (Vol_H2sys - min_h2_vol) << "\n";
+		double l_tank = 0.;		
 
 		// If the volume of the tank is below that of the max. sphere, decrease the size of the sphere
 		if (Vol_H2sys < min_h2_vol) {
@@ -480,7 +480,11 @@ namespace AircraftModel {
 			l_tank = (Vol_H2sys - 4. * 3.14159265358979323846 * pow(c, 3.) / 3.) /
 				(3.14159265358979323846 * pow(c, 2.)) + 2. * c;
 		}
-		std::cout << l_tank << "\n";
+
+		// DEBUG: const double Vol_H2sys2 = M_H2 / rho_H2_tank ; // m^3
+		// DEBUG: std::cout << "\n" << "Difference in Volumes: " << Vol_H2sys - Vol_H2sys2 << "\n";
+		// DEBUG: std::cout << (Vol_H2sys - min_h2_vol) << "\n";
+		// DEBUG: std::cout << l_tank << "\n";
 
 		// Fill out the cabin with the remaining payload
 		const double x_CG_payload1 = 5.86 / 2. + x_CG_empty / 2. - l_tank / 4.;
