@@ -355,14 +355,20 @@ namespace AircraftModel {
 		const double BSFC_JA1_TO = correl_turboprop_TOBSFC(P_max); // g/kWh
 		double BSFC_JA1_cruise = compute_new_engine_cruise_BSFC(BSFC_JA1_TO, h); // g/kWh
 
-		// Convert BSFC from g/kWh to kg/MJ
-		BSFC_JA1_cruise = BSFC_JA1_cruise / ( 3.6 * 1000. );
+		// Convert BSFC from g/kWh to kg/kWh
+		BSFC_JA1_cruise = BSFC_JA1_cruise / 1000.;
+
+		// Convert BSFC from kg/kWh to kg/kJ
+		BSFC_JA1_cruise = BSFC_JA1_cruise / ( 3600. );
+		
+		// Convert BSFC from kg/kJ to kg/MJ
+		BSFC_JA1_cruise = BSFC_JA1_cruise * 1000.;
 
 		// Using the BSFC equation, the thermal efficiency can be computed
 		const double eta_therm = 1. / (BSFC_JA1_cruise * c_JA1);
 
 		// Assuming the thermal efficiency is the same for both fuels, calculate the hybrid BSFC
-		double BSFC_hybrid = (H2_frac/c_H2 + (1 - H2_frac)/c_JA1) / eta_therm;
+		double BSFC_hybrid = (H2_frac/c_H2 + (1 - H2_frac)/c_JA1) / eta_therm; // kg/MJ
 
 		// Convert the BSFC from kg/MJ to kg/J and return the result
 		return BSFC_hybrid / (1e6);
@@ -386,6 +392,205 @@ namespace AircraftModel {
 
 			return num_pax;
 		}
+	}
+
+	bool compute_cg_loc_mass_pax(const double& ip_M_engine, const double& ip_M_fuel,
+		const double& ip_H2_frac, double& op_cg_loc, double& op_calc_mass, double& op_cg_loc_nofuel,
+		double& op_calc_mass_nofuel, double& op_payload, double& op_M_JA1, double & op_M_H2_net, int& op_num_pax,
+		double& op_tank_l, bool& op_vio_mass, bool& op_vio_vol) {
+		// Compute the total mass "op_calc_mass" in kg, the centre of gravity location "op_cg_loc"
+		// in m, the payload mass "op_payload". It also states whether the volume and mass
+		// constraints have been violated in "op_vio_vol" and "op_vio_mass" respectively. The nofuel
+		// version of the outputs are those which assume a zero-fuel aircraft (they still include the
+		// mass of hydrogen tanks). The mass of kerosene "op_M_JA1" in kg is also given.
+		// 
+		// The inputs are the mass of the engine "ip_M_engine" in kg, the ip TOTAL fuel mass 
+		// "ip_M_fuel" in kg, and the H2 power fraction "ip_H2_frac" (power of hydrogen divided 
+		// by power of kerosene).
+		//
+		// To compute the masses, first the volume of hydrogen needed is considered and the
+		// remaining payload (to reach MTOW) is packed in the remaining space. This allows for the
+		// aircraft to have a total mass that is LESS THAN MTOW, meaning that THIS FUNCTION NEEDS
+		// TO BE ITERATED to achieve concordance to the payload fraction assumed in breguet and the
+		// output of this program.
+
+
+		// Initialise all outputs
+		op_cg_loc = 0.;
+		op_calc_mass = 0.;
+		op_payload = 0.;
+		op_num_pax = 1;
+		op_M_JA1 = 0;
+		op_M_H2_net = 0;
+		op_vio_mass = false;
+		op_vio_vol = false;
+
+		// Initialize aircraft constants
+		const double MTOW = 22000.; // kg
+		const double M_empty = 13500.; // kg
+		const double x_CG_empty = 12.202; // m
+		const double x_CG_JA1 = 12.203; // m
+		const double M_cargo_front_max = 928.; // kg
+		const double x_CG_cargo_front = 4.192; //m
+		const double M_cargo_rear_max = 637.; // kg
+		const double x_CG_cargo_rear = 21.4555; // m
+		const double pass_packing_density = 429.02; // kg/m
+		const double x_per_row = 0.748; // m
+		const double mass_per_pax = 80.; // kg
+		double M_pass_total = 0.; //kg
+
+		// Initialize engine constants
+		const double M_PW127 = 480.; // kg
+		const double x_CG_engine = 10.63; // m
+
+		// Initialize fuel constants
+		const double c_JA1 = 43.0; // MJ/kg
+		const double c_H2 = 121.1; // MJ/kg
+		const double rho_H2_tank = 67.3; // kg/m^3 https://www.mdpi.com/1996-1073/11/1/105
+		const double rho_H2_l = 70.8; // kg/m^3
+		const double rho_H2_g = rho_H2_l / 5.6; // kg/m^3 https://www.mdpi.com/1996-1073/11/1/105
+		const double tank_eta = 0.63; // H2 kg req / system kg
+		const double c = 1.121; // m of effective tank radius
+		const double tank_vol_max = 47.11; //m^3 (in order to keep CG at same location as empty aircraft)
+
+		// Calculate the base aircraft empty CG product and mass
+		double CG_product = M_empty * x_CG_empty;
+		double M_total = M_empty;
+
+		// Account for the different engine
+		const double delta_M_engines = 2. * ( ip_M_engine - M_PW127 ); // kg
+		CG_product += delta_M_engines * x_CG_engine;
+		M_total += delta_M_engines;
+
+		// Calculate the amount of kerosene and hydrogen
+		const double M_H2 = ip_M_fuel / (1. + (c_H2/c_JA1) * (1./ip_H2_frac - 1.)); // kg
+		const double M_JA1 = ip_M_fuel - M_H2; // kg
+		op_M_JA1 = M_JA1;
+
+		// Account for the kerosene
+		CG_product += M_JA1 * x_CG_JA1;
+		M_total += M_JA1;
+
+		// Calculate the volume and mass of the H2 system, and account for it
+		const double Vol_H2sys = M_H2 / (rho_H2_tank - rho_H2_g) * (1. - rho_H2_g/ rho_H2_l); // m^3
+		const double M_H2_system = M_H2 / tank_eta; // kg
+		op_M_H2_net = Vol_H2sys * rho_H2_tank; //kg
+		CG_product += M_H2_system * x_CG_empty;
+		M_total += M_H2_system;
+
+		// Check whether the volume constraint has been violated
+		if (Vol_H2sys > tank_vol_max) {
+			op_vio_vol = true;
+		}
+		else {
+			op_vio_vol = false;
+		}
+
+		// Check whether the mass constraint has been violated
+		double M_pay_remaining = MTOW - M_total;
+		op_payload = M_pay_remaining;
+
+		if (M_pay_remaining <= 0.) {
+			op_vio_mass = true;
+		}
+		else {
+			op_vio_mass = false;
+		}
+
+		// Calculate the constraining volume
+		const double min_h2_vol = 4. * 3.14159265358979323846 * pow(c, 3.) / 3.;
+		double l_tank = 0.;		
+
+		// If the volume of the tank is below that of the max. sphere, decrease the size of the sphere
+		if (Vol_H2sys < min_h2_vol) {
+			l_tank = 2 * pow(3. * Vol_H2sys / (4. * 3.14159265358979323846), 1. / 3.);
+		}
+		else {
+			l_tank = (Vol_H2sys - 4. * 3.14159265358979323846 * pow(c, 3.) / 3.) /
+				(3.14159265358979323846 * pow(c, 2.)) + 2. * c;
+		}
+
+		// Set the output
+		op_tank_l = l_tank;
+
+		// Compute the number of seats available and the total mass these passengers will have
+		const int num_seats = compute_num_seats(l_tank, ip_H2_frac);
+		const double max_pass_mass = num_seats * mass_per_pax;
+
+		// Distribute all of the passengers symetrically across both cabins (the centre of the cabin is the
+		// empty cg)
+		if (max_pass_mass >= M_pay_remaining) {
+			
+			CG_product += M_pay_remaining * x_CG_empty;
+			M_total += M_pay_remaining;
+			M_pass_total += M_pay_remaining;
+
+			op_num_pax = static_cast<int>(floor(M_pay_remaining / mass_per_pax));
+			op_payload = M_total - M_empty - delta_M_engines - M_H2_system - M_JA1;
+			op_calc_mass = M_total;
+			op_cg_loc = CG_product / M_total;
+			op_calc_mass_nofuel = M_total - M_JA1 - M_H2;
+			op_cg_loc_nofuel = (CG_product - M_JA1 * x_CG_JA1 - M_H2 * x_CG_empty)
+				/ op_calc_mass_nofuel;
+
+			return true;
+
+		}
+		else {
+			// Distribute all of the passengers symetrically across both cabins
+			CG_product += max_pass_mass * x_CG_empty;
+			M_total += max_pass_mass;
+			M_pay_remaining += -max_pass_mass;
+
+			op_num_pax = num_seats;
+		}
+
+		// Now, fill out the rear cargo compartment
+		if (M_pay_remaining > M_cargo_rear_max) {
+			M_pay_remaining += -M_cargo_rear_max;
+
+			// Account for the rear cargo compartment
+			CG_product += M_cargo_rear_max * x_CG_cargo_rear;
+			M_total += M_cargo_rear_max;
+		}
+		else {
+			// Put all the remaining payload in the rear cargo compartment 
+			CG_product += M_pay_remaining * x_CG_cargo_rear;
+			M_total += M_pay_remaining;
+			
+			
+			op_payload = M_total - M_empty - delta_M_engines - M_H2_system - M_JA1;
+			op_calc_mass = M_total;
+			op_cg_loc = CG_product / M_total;
+			op_calc_mass_nofuel = M_total - M_JA1 - M_H2;
+			op_cg_loc_nofuel = (CG_product - M_JA1 * x_CG_JA1 - M_H2 * x_CG_empty)
+				/ op_calc_mass_nofuel;
+
+			return true;
+		}
+
+		// Secondly, fill out the front cargo compartment
+		if (M_pay_remaining >= M_cargo_front_max) {
+			M_pay_remaining += -M_cargo_front_max;
+
+			// Account for the front cargo compartment
+			CG_product += M_cargo_front_max * x_CG_cargo_front;
+			M_total += M_cargo_front_max;
+		}
+		else {
+			// Put all the remaining payload in the front cargo compartment 
+			CG_product += M_pay_remaining * x_CG_cargo_front;
+			M_total += M_pay_remaining;
+		}
+
+		op_payload = M_total - M_empty - delta_M_engines - M_H2_system - M_JA1;
+		op_calc_mass = M_total;
+		op_cg_loc = CG_product / M_total;
+		op_calc_mass_nofuel = M_total - M_JA1 - M_H2;
+		op_cg_loc_nofuel = (CG_product - M_JA1 * x_CG_JA1 - M_H2 * x_CG_empty)
+			/ op_calc_mass_nofuel;
+
+		return true;
 	}
 
 	bool compute_cg_loc_mass(const double& ip_M_engine, const double& ip_M_fuel,
@@ -509,7 +714,8 @@ namespace AircraftModel {
 
 		// Compute the number of seats available and the total mass these passengers will have
 		const int num_seats = compute_num_seats(l_tank, ip_H2_frac);
-		const int max_pass_mass = num_seats * mass_per_pax;
+		const double l_cabin_seats = 12.84; //m
+		const double max_pass_mass = (l_cabin_seats - l_tank) * pass_packing_density;
 
 		// Distribute all of the passengers symetrically across both cabins (the centre of the cabin is the
 		// empty cg)
