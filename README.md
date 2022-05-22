@@ -3,6 +3,7 @@
 Implements a low-fidelity aircraft model inspired by the methods used in Raymer.
 
 Some relations were extracted from Raymer:
+
 D. Raymer, Aircraft Design: A Conceptual Approach, Sixth Edition. AIAA Education Series, Sep. 2018, isbn: 978-1-62410-490-9. doi: 10.2514/4.104909.
 
 Data from the following sources was used to make correlations:
