@@ -21,3 +21,5 @@ Data from the following sources was also used as constants:
 “Fuels - Higher and Lower Calorific Values,” Engineering ToolBox. (2003), [Online]. Available: https://www.engineeringtoolbox.com/fuels-higher-calorific-values-d_169.html. Accessed on May 13, 2022.
 
 C. Winnefeld et al., “Modelling and Designing Cryogenic Hydrogen Tanks for Future Aircraft Applications,” Energies, vol. 11, no. 1, 2018, issn: 1996-1073. doi: 10.3390/en11010105. [Online]. Available: https://www.mdpi.com/1996-1073/11/1/105.
+
+S. C. Walpole et al., “The weight of nations: an estimation of adult human biomass,” BMC Public Health, vol. 12, p. 439, 2012, issn: 1471-2458. doi: 10.1186/1471-2458-12-439
