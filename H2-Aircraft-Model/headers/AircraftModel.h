@@ -14,6 +14,10 @@ namespace AircraftModel {
 	// temperature(op_T) in degrees kelvin, speed of sound(op_a) in m / s, pressure
 	// (op_P)in kPa, density(op_rho) in Kg / m ^ 3, and dynamic viscosity (op_visc) 
 	// in Kg/m/s at a given input height in kilometers(ip_h).
+	//
+	// Based on the following lecture slides: 
+	// Engineering Tripos Part IIB, 4A7: Aircraft Aerodynamics and Design
+	// Bill Dawes (with thanks to Dr Chez Hall), slides 20-22
 	void ISA(const double& ip_h, double& op_T, double& op_a, double& op_P, double& op_rho,
 		double& op_visc);
 	
@@ -46,6 +50,9 @@ namespace AircraftModel {
 	// M is the Mach number of the free-stream flow
 	double compute_turb_frict_coeff(const double& Re, const double& M);
 
+	// Computes a delta in the CD according to changes in the fuselage shape.
+	//
+	// This function adapts the method from http://wpage.unina.it/danilo.ciliberti/doc/Cusati.pdf
 	double compute_delta_CD_fuselage(const double& current_d, const double& current_l,
 		const double& next_d, const double& next_l, const double& M,
 		const double& cruise_h);
@@ -77,6 +84,8 @@ namespace AircraftModel {
 	// Implements the engine performance table at ISA conditions given in the following link:
 	// https://www.quora.com/At-cruise-speed-do-turboprops-run-at-their-maximal-rated-horse-power-If-not-how-much-less-is-that-given-horse-power-typically
 	//
+	// This information is also available in the ATR 72 FCOM: https://aviation-is.better-than.tv/atr72fcom.pdf
+	// 
 	// The tables assume a CG location of 25%.
 	// 
 	// The input "h" is height in km, which must lie above 2.44 km and below 7.61 km. The 
@@ -126,14 +135,9 @@ namespace AircraftModel {
 	// maximum power output for a single turboprop engine "P_max" in kW, give the hybrid
 	// BSFC for a single engine in kg/J;
 	// 
-	// Specific energy data:
-	//    - JA1: https://en.wikipedia.org/wiki/Jet_fuel
-	//    - H2: https://www.skai.co/hydrogen-details#:~:text=The%20specific%20energy%20of%20hydrogen,lithium%2Dion%20batteries%20(approximately%20
-	//
 	// BSFC Equation: BSFC = Fuel Consumption/Power
-	//                     = ( H2_frac/c_H2 + 1/c_JA1 ) / ( H2_frac + 1 ) / eta_therm
 	//
-	// Please note that in this case "thermal efficiency" is the product of both thermal 
+	// Please note that in this case "thermal efficiency" is the product of both cycle
 	// and combustion efficiency.
 	double calculate_hybrid_BSFC(const double& H2_frac, const double& h, const double& P_max);
 

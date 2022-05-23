@@ -9,6 +9,10 @@ namespace AircraftModel {
 		// temperature(op_T) in degrees kelvin, speed of sound(op_a) in m / s, pressure
 		// (op_P)in kPa, density(op_rho) in Kg / m ^ 3, and dynamic viscosity (op_visc) 
 		// in Kg/m/s at a given input height in kilometers(ip_h).
+		//
+		// Based on the following lecture slides: 
+		// Engineering Tripos Part IIB, 4A7: Aircraft Aerodynamics and Design
+		// Bill Dawes (with thanks to Dr Chez Hall), slides 20-22
 	
 		// Initialize the relevant quantities at sea level. Viscosity data from:
 		// http://www.aerodynamics4students.com/properties-of-the-atmosphere/sea-level-conditions.php
@@ -160,6 +164,10 @@ namespace AircraftModel {
 	double compute_delta_CD_fuselage(const double& current_d, const double& current_l,
 		const double& next_d, const double& next_l, const double& M, 
 		const double& cruise_h) {
+		// Computes a delta in the CD according to changes in the fuselage shape.
+		//
+		// This function adapts the method from http://wpage.unina.it/danilo.ciliberti/doc/Cusati.pdf
+		//
 
 		// Calculate ISA values
 		double T = 0.;
@@ -226,6 +234,8 @@ namespace AircraftModel {
 		// Implements the engine performance table at ISA conditions given in the following link:
 		// https://www.quora.com/At-cruise-speed-do-turboprops-run-at-their-maximal-rated-horse-power-If-not-how-much-less-is-that-given-horse-power-typically
 		//
+		// This information is also available in the ATR 72 FCOM: https://aviation-is.better-than.tv/atr72fcom.pdf
+		// 
 		// The tables assume a CG location of 25%.
 		// 
 		// The input "h" is height in km, which must lie above 2.44 km and below 7.61 km. The 
@@ -328,7 +338,7 @@ namespace AircraftModel {
 		// cruise altitude h (which must be provided in km). Returns the BSFC at cruise with
 		// the same units as the input units of the BSFC.
 
-		const double PW127_BSFC_TO = 279.; // g/kWh
+		const double PW127_BSFC_TO = 279.; // g/kWh (from https://en.wikipedia.org/wiki/Pratt_%26_Whitney_Canada_PW100)
 		const double PW127_BSFC_cruise = compute_cruise_BSFC_PW127(h) * 3.6e+9; // g/kWh
 		
 		return BSFC_TO * PW127_BSFC_cruise / PW127_BSFC_TO;
@@ -339,17 +349,13 @@ namespace AircraftModel {
 		// maximum power output for a single turboprop engine "P_max" in kW, give the hybrid
 		// BSFC for a single engine in kg/J;
 		// 
-		// Specific energy data:
-		//    - JA1: https://en.wikipedia.org/wiki/Jet_fuel
-		//    - H2: https://www.skai.co/hydrogen-details#:~:text=The%20specific%20energy%20of%20hydrogen,lithium%2Dion%20batteries%20(approximately%20
-		//
 		// BSFC Equation: BSFC = Fuel Consumption/Power
 		//
 		// Please note that in this case "thermal efficiency" is the product of both cycle
 		// and combustion efficiency.
 	
-		const double c_JA1 = 43.0; // MJ/kg (specific energy = LCV)
-		const double c_H2 = 121.1; // MJ/kg (specific energy)
+		const double c_JA1 = 43.0; // MJ/kg (specific energy = LCV) (Data from https://www.engineeringtoolbox.com/fuels-higher-calorific-values-d_169.html)
+		const double c_H2 = 121.1; // MJ/kg (specific energy) (Hand calculated with data from https://www.engineeringtoolbox.com/fuels-higher-calorific-values-d_169.html
 
 		// First assume it's all kerosene
 		const double BSFC_JA1_TO = correl_turboprop_TOBSFC(P_max); // g/kWh
@@ -378,9 +384,9 @@ namespace AircraftModel {
 		// Compute the number of passengers by considering the number of rows occupied by the tanks.
 		// The "H2_tank_len" input should be in meters.
 
-		int num_pax = 68;
-		int pax_per_row = 4;
-		double len_row = 0.748; //m
+		int num_pax = 68; // (from https ://www.atr-aircraft.com/wp-content/uploads/2020/07/72-500.pdf)
+		int pax_per_row = 4; // (from https ://www.atr-aircraft.com/wp-content/uploads/2020/07/72-500.pdf)
+		double len_row = 0.748; //m (measured from https://www.atr-aircraft.com/wp-content/uploads/2020/07/72-500.pdf)
 
 		if (H2_pfrac < 1e-3 || H2_tank_len < 1e-3) {
 			return num_pax;
@@ -426,32 +432,32 @@ namespace AircraftModel {
 		op_vio_vol = false;
 
 		// Initialize aircraft constants
-		const double MTOW = 22000.; // kg
-		const double M_empty = 13500.; // kg
-		const double x_CG_empty = 12.202; // m
-		const double x_CG_JA1 = 12.203; // m
-		const double M_cargo_front_max = 928.; // kg
-		const double x_CG_cargo_front = 4.192; //m
-		const double M_cargo_rear_max = 637.; // kg
-		const double x_CG_cargo_rear = 21.4555; // m
-		const double pass_packing_density = 429.02; // kg/m
-		const double x_per_row = 0.748; // m
-		const double mass_per_pax = 80.; // kg
+		const double MTOW = 22000.; // kg (from https://www.atr-aircraft.com/wp-content/uploads/2020/07/72-500.pdf)
+		const double M_empty = 13500.; // kg (from https://www.atr-aircraft.com/wp-content/uploads/2020/07/72-500.pdf)
+		const double x_CG_empty = 12.202; // m (measured from https://www.atr-aircraft.com/wp-content/uploads/2020/07/72-500.pdf)
+		const double x_CG_JA1 = 12.203; // m (measured from https://www.atr-aircraft.com/wp-content/uploads/2020/07/72-500.pdf)
+		const double M_cargo_front_max = 928.; // kg from https://www.theairlinepilots.com/apps/atr/atr72-loadsheet.php
+		const double x_CG_cargo_front = 4.192; //m (measured from https://www.atr-aircraft.com/wp-content/uploads/2020/07/72-500.pdf)
+		const double M_cargo_rear_max = 637.; // kg from https://www.theairlinepilots.com/apps/atr/atr72-loadsheet.php
+		const double x_CG_cargo_rear = 21.4555; // m (measured from https://www.atr-aircraft.com/wp-content/uploads/2020/07/72-500.pdf)
+		const double pass_packing_density = 429.02; // kg/m (measured from https://www.atr-aircraft.com/wp-content/uploads/2020/07/72-500.pdf)
+		const double x_per_row = 0.748; // m (measured from https://www.atr-aircraft.com/wp-content/uploads/2020/07/72-500.pdf)
+		const double mass_per_pax = 80.; // kg (based on data from https://bmcpublichealth.biomedcentral.com/articles/10.1186/1471-2458-12-439)
 		double M_pass_total = 0.; //kg
 
 		// Initialize engine constants
-		const double M_PW127 = 480.; // kg
-		const double x_CG_engine = 10.63; // m
+		const double M_PW127 = 480.; // kg (from https://en.wikipedia.org/wiki/Pratt_%26_Whitney_Canada_PW100)
+		const double x_CG_engine = 10.63; // m (measured from https://www.atr-aircraft.com/wp-content/uploads/2020/07/72-500.pdf)
 
 		// Initialize fuel constants
-		const double c_JA1 = 43.0; // MJ/kg
-		const double c_H2 = 121.1; // MJ/kg
+		const double c_JA1 = 43.0; // MJ/kg (specific energy = LCV) (Data from https://www.engineeringtoolbox.com/fuels-higher-calorific-values-d_169.html)
+		const double c_H2 = 121.1; // MJ/kg (specific energy) (Hand calculated with data from https://www.engineeringtoolbox.com/fuels-higher-calorific-values-d_169.html
 		const double rho_H2_tank = 67.3; // kg/m^3 https://www.mdpi.com/1996-1073/11/1/105
-		const double rho_H2_l = 70.8; // kg/m^3
+		const double rho_H2_l = 70.8; // kg/m^3 https://www1.eere.energy.gov/hydrogenandfuelcells/tech_validation/pdfs/fcm01r0.pdf
 		const double rho_H2_g = rho_H2_l / 5.6; // kg/m^3 https://www.mdpi.com/1996-1073/11/1/105
-		const double tank_eta = 0.63; // H2 kg req / system kg
-		const double c = 1.121; // m of effective tank radius
-		const double tank_vol_max = 47.11; //m^3 (in order to keep CG at same location as empty aircraft)
+		const double tank_eta = 0.63; // H2 kg req / system kg https://www.mdpi.com/1996-1073/11/1/105
+		const double c = 1.121; // m of effective tank radius (measured from https://www.atr-aircraft.com/wp-content/uploads/2020/07/72-500.pdf)
+		const double tank_vol_max = 47.11; //m^3 (in order to keep CG at same location as empty aircraft) (measured from https://www.atr-aircraft.com/wp-content/uploads/2020/07/72-500.pdf)
 
 		// Calculate the base aircraft empty CG product and mass
 		double CG_product = M_empty * x_CG_empty;
@@ -545,40 +551,50 @@ namespace AircraftModel {
 			op_num_pax = num_seats;
 		}
 
-		// Now, fill out the rear cargo compartment
-		if (M_pay_remaining > M_cargo_rear_max) {
-			M_pay_remaining += -M_cargo_rear_max;
+		//// Now, fill out the cargo compartments symmetrically
+		//if (M_pay_remaining/2 > M_cargo_rear_max) {
+		//	M_pay_remaining += -M_cargo_rear_max;
 
-			// Account for the rear cargo compartment
-			CG_product += M_cargo_rear_max * x_CG_cargo_rear;
-			M_total += M_cargo_rear_max;
-		}
-		else {
-			// Put all the remaining payload in the rear cargo compartment 
-			CG_product += M_pay_remaining * x_CG_cargo_rear;
-			M_total += M_pay_remaining;
-			
-			
-			op_payload = M_total - M_empty - delta_M_engines - M_H2_system - M_JA1;
-			op_calc_mass = M_total;
-			op_cg_loc = CG_product / M_total;
-			op_calc_mass_nofuel = M_total - M_JA1 - M_H2;
-			op_cg_loc_nofuel = (CG_product - M_JA1 * x_CG_JA1 - M_H2 * x_CG_empty)
-				/ op_calc_mass_nofuel;
+		//	// Account for the rear cargo compartment
+		//	CG_product += M_cargo_rear_max * x_CG_cargo_rear;
+		//	M_total += M_cargo_rear_max;
 
-			return true;
-		}
+		//	// Put the remaining amount in the front compartment
+		//	if (M_pay_remaining > M_cargo_front_max) {
+		//		CG_product += M_cargo_front_max * x_CG_cargo_front;
+		//		M_total += M_cargo_front_max;
+		//	}
+		//	else {
+		//		CG_product += M_pay_remaining * x_CG_cargo_front;
+		//		M_total += M_pay_remaining;
+		//	}
+		//}
+		//else {
+		//	// Distribute the weight symmetrically if possible
+		//	CG_product += M_pay_remaining / 2 * x_CG_cargo_rear;
+		//	CG_product += M_pay_remaining / 2 * x_CG_cargo_front;
+		//	M_total += M_pay_remaining;
+		//}
 
-		// Secondly, fill out the front cargo compartment
-		if (M_pay_remaining >= M_cargo_front_max) {
+		// Now, fill out the cargo compartments symmetrically
+		if (M_pay_remaining > M_cargo_front_max) {
 			M_pay_remaining += -M_cargo_front_max;
 
-			// Account for the front cargo compartment
+			// Account for the rear cargo compartment
 			CG_product += M_cargo_front_max * x_CG_cargo_front;
 			M_total += M_cargo_front_max;
+
+			// Put the remaining amount in the front compartment
+			if (M_pay_remaining > M_cargo_rear_max) {
+				CG_product += M_cargo_rear_max * x_CG_cargo_rear;
+				M_total += M_cargo_rear_max;
+			}
+			else {
+				CG_product += M_pay_remaining * x_CG_cargo_rear;
+				M_total += M_pay_remaining;
+			}
 		}
 		else {
-			// Put all the remaining payload in the front cargo compartment 
 			CG_product += M_pay_remaining * x_CG_cargo_front;
 			M_total += M_pay_remaining;
 		}
@@ -625,32 +641,32 @@ namespace AircraftModel {
 		op_vio_vol = false;
 
 		// Initialize aircraft constants
-		const double MTOW = 22000.; // kg
-		const double M_empty = 13500.; // kg
-		const double x_CG_empty = 12.202; // m
-		const double x_CG_JA1 = 12.203; // m
-		const double M_cargo_front_max = 928.; // kg
-		const double x_CG_cargo_front = 4.192; //m
-		const double M_cargo_rear_max = 637.; // kg
-		const double x_CG_cargo_rear = 21.4555; // m
-		const double pass_packing_density = 429.02; // kg/m
-		const double x_per_row = 0.748; // m
-		const double mass_per_pax = 80.; // kg
+		const double MTOW = 22000.; // kg (from https://www.atr-aircraft.com/wp-content/uploads/2020/07/72-500.pdf)
+		const double M_empty = 13500.; // kg (from https://www.atr-aircraft.com/wp-content/uploads/2020/07/72-500.pdf)
+		const double x_CG_empty = 12.202; // m (measured from https://www.atr-aircraft.com/wp-content/uploads/2020/07/72-500.pdf)
+		const double x_CG_JA1 = 12.203; // m (measured from https://www.atr-aircraft.com/wp-content/uploads/2020/07/72-500.pdf)
+		const double M_cargo_front_max = 928.; // kg from https://www.theairlinepilots.com/apps/atr/atr72-loadsheet.php
+		const double x_CG_cargo_front = 4.192; //m (measured from https://www.atr-aircraft.com/wp-content/uploads/2020/07/72-500.pdf)
+		const double M_cargo_rear_max = 637.; // kg from https://www.theairlinepilots.com/apps/atr/atr72-loadsheet.php
+		const double x_CG_cargo_rear = 21.4555; // m (measured from https://www.atr-aircraft.com/wp-content/uploads/2020/07/72-500.pdf)
+		const double pass_packing_density = 429.02; // kg/m (measured from https://www.atr-aircraft.com/wp-content/uploads/2020/07/72-500.pdf)
+		const double x_per_row = 0.748; // m (measured from https://www.atr-aircraft.com/wp-content/uploads/2020/07/72-500.pdf)
+		const double mass_per_pax = 80.; // kg (based on data from https://bmcpublichealth.biomedcentral.com/articles/10.1186/1471-2458-12-439)
 		double M_pass_total = 0.; //kg
 
 		// Initialize engine constants
-		const double M_PW127 = 480.; // kg
-		const double x_CG_engine = 10.63; // m
+		const double M_PW127 = 480.; // kg (from https://en.wikipedia.org/wiki/Pratt_%26_Whitney_Canada_PW100)
+		const double x_CG_engine = 10.63; // m (measured from https://www.atr-aircraft.com/wp-content/uploads/2020/07/72-500.pdf)
 
 		// Initialize fuel constants
-		const double c_JA1 = 43.0; // MJ/kg
-		const double c_H2 = 121.1; // MJ/kg
+		const double c_JA1 = 43.0; // MJ/kg (specific energy = LCV) (Data from https://www.engineeringtoolbox.com/fuels-higher-calorific-values-d_169.html)
+		const double c_H2 = 121.1; // MJ/kg (specific energy) (Hand calculated with data from https://www.engineeringtoolbox.com/fuels-higher-calorific-values-d_169.html
 		const double rho_H2_tank = 67.3; // kg/m^3 https://www.mdpi.com/1996-1073/11/1/105
-		const double rho_H2_l = 70.8; // kg/m^3
+		const double rho_H2_l = 70.8; // kg/m^3 https://www1.eere.energy.gov/hydrogenandfuelcells/tech_validation/pdfs/fcm01r0.pdf
 		const double rho_H2_g = rho_H2_l / 5.6; // kg/m^3 https://www.mdpi.com/1996-1073/11/1/105
-		const double tank_eta = 0.63; // H2 kg req / system kg
-		const double c = 1.121; // m of effective tank radius
-		const double tank_vol_max = 47.11; //m^3 (in order to keep CG at same location as empty aircraft)
+		const double tank_eta = 0.63; // H2 kg req / system kg https://www.mdpi.com/1996-1073/11/1/105
+		const double c = 1.121; // m of effective tank radius (measured from https://www.atr-aircraft.com/wp-content/uploads/2020/07/72-500.pdf)
+		const double tank_vol_max = 47.11; //m^3 (in order to keep CG at same location as empty aircraft) (measured from https://www.atr-aircraft.com/wp-content/uploads/2020/07/72-500.pdf)
 
 		// Calculate the base aircraft empty CG product and mass
 		double CG_product = M_empty * x_CG_empty;
@@ -745,40 +761,50 @@ namespace AircraftModel {
 			op_num_pax = num_seats;
 		}
 
-		// Now, fill out the rear cargo compartment
-		if (M_pay_remaining > M_cargo_rear_max) {
-			M_pay_remaining += -M_cargo_rear_max;
+		//// Now, fill out the cargo compartments symmetrically
+		//if (M_pay_remaining/2 > M_cargo_rear_max) {
+		//	M_pay_remaining += -M_cargo_rear_max;
 
-			// Account for the rear cargo compartment
-			CG_product += M_cargo_rear_max * x_CG_cargo_rear;
-			M_total += M_cargo_rear_max;
-		}
-		else {
-			// Put all the remaining payload in the rear cargo compartment 
-			CG_product += M_pay_remaining * x_CG_cargo_rear;
-			M_total += M_pay_remaining;
-			
-			
-			op_payload = M_total - M_empty - delta_M_engines - M_H2_system - M_JA1;
-			op_calc_mass = M_total;
-			op_cg_loc = CG_product / M_total;
-			op_calc_mass_nofuel = M_total - M_JA1 - M_H2;
-			op_cg_loc_nofuel = (CG_product - M_JA1 * x_CG_JA1 - M_H2 * x_CG_empty)
-				/ op_calc_mass_nofuel;
+		//	// Account for the rear cargo compartment
+		//	CG_product += M_cargo_rear_max * x_CG_cargo_rear;
+		//	M_total += M_cargo_rear_max;
 
-			return true;
-		}
+		//	// Put the remaining amount in the front compartment
+		//	if (M_pay_remaining > M_cargo_front_max) {
+		//		CG_product += M_cargo_front_max * x_CG_cargo_front;
+		//		M_total += M_cargo_front_max;
+		//	}
+		//	else {
+		//		CG_product += M_pay_remaining * x_CG_cargo_front;
+		//		M_total += M_pay_remaining;
+		//	}
+		//}
+		//else {
+		//	// Distribute the weight symmetrically if possible
+		//	CG_product += M_pay_remaining / 2 * x_CG_cargo_rear;
+		//	CG_product += M_pay_remaining / 2 * x_CG_cargo_front;
+		//	M_total += M_pay_remaining;
+		//}
 
-		// Secondly, fill out the front cargo compartment
-		if (M_pay_remaining >= M_cargo_front_max) {
+		// Now, fill out the cargo compartments symmetrically
+		if (M_pay_remaining > M_cargo_front_max) {
 			M_pay_remaining += -M_cargo_front_max;
 
-			// Account for the front cargo compartment
+			// Account for the rear cargo compartment
 			CG_product += M_cargo_front_max * x_CG_cargo_front;
 			M_total += M_cargo_front_max;
+
+			// Put the remaining amount in the front compartment
+			if (M_pay_remaining > M_cargo_rear_max) {
+				CG_product += M_cargo_rear_max * x_CG_cargo_rear;
+				M_total += M_cargo_rear_max;
+			}
+			else {
+				CG_product += M_pay_remaining * x_CG_cargo_rear;
+				M_total += M_pay_remaining;
+			}
 		}
 		else {
-			// Put all the remaining payload in the front cargo compartment 
 			CG_product += M_pay_remaining * x_CG_cargo_front;
 			M_total += M_pay_remaining;
 		}
