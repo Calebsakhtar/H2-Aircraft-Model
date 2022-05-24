@@ -398,7 +398,7 @@ namespace AircraftModel {
 
 			return num_pax;
 		}
-	}
+	}	
 
 	bool compute_cg_loc_mass_pax(const double& ip_M_engine, const double& ip_M_fuel,
 		const double& ip_H2_frac, double& op_cg_loc, double& op_calc_mass, double& op_cg_loc_nofuel,
@@ -551,32 +551,7 @@ namespace AircraftModel {
 			op_num_pax = num_seats;
 		}
 
-		//// Now, fill out the cargo compartments symmetrically
-		//if (M_pay_remaining/2 > M_cargo_rear_max) {
-		//	M_pay_remaining += -M_cargo_rear_max;
-
-		//	// Account for the rear cargo compartment
-		//	CG_product += M_cargo_rear_max * x_CG_cargo_rear;
-		//	M_total += M_cargo_rear_max;
-
-		//	// Put the remaining amount in the front compartment
-		//	if (M_pay_remaining > M_cargo_front_max) {
-		//		CG_product += M_cargo_front_max * x_CG_cargo_front;
-		//		M_total += M_cargo_front_max;
-		//	}
-		//	else {
-		//		CG_product += M_pay_remaining * x_CG_cargo_front;
-		//		M_total += M_pay_remaining;
-		//	}
-		//}
-		//else {
-		//	// Distribute the weight symmetrically if possible
-		//	CG_product += M_pay_remaining / 2 * x_CG_cargo_rear;
-		//	CG_product += M_pay_remaining / 2 * x_CG_cargo_front;
-		//	M_total += M_pay_remaining;
-		//}
-
-		// Now, fill out the cargo compartments symmetrically
+		// Now, fill out the cargo compartments (front first)
 		if (M_pay_remaining > M_cargo_front_max) {
 			M_pay_remaining += -M_cargo_front_max;
 
@@ -786,7 +761,7 @@ namespace AircraftModel {
 		//	M_total += M_pay_remaining;
 		//}
 
-		// Now, fill out the cargo compartments symmetrically
+		// Now, fill out the cargo compartments compartments (front first)
 		if (M_pay_remaining > M_cargo_front_max) {
 			M_pay_remaining += -M_cargo_front_max;
 
@@ -818,5 +793,163 @@ namespace AircraftModel {
 
 		return true;
 	}
+
+
+	bool compute_cg_loc_mass_offdesign(const double& ip_M_engine, const double& ip_M_fuel, const double& ip_M_H2_design,
+		const double& ip_H2_frac, const int& ip_num_seats, double& op_cg_loc, double& op_calc_mass,
+		double& op_cg_loc_nofuel, double& op_calc_mass_nofuel, double& op_payload, double& op_M_JA1, double& op_M_H2_net,
+		int& op_num_pax, bool& op_vio_mass, bool& op_vio_vol) {
+		// Modified version of compute_cg_loc_mass_pax that allows the weights to be distributed for an
+		// aircraft off-design.
+
+
+		// Initialise all outputs
+		op_cg_loc = 0.;
+		op_calc_mass = 0.;
+		op_payload = 0.;
+		op_M_JA1 = 0;
+		op_M_H2_net = 0;
+		op_vio_mass = false;
+		op_vio_vol = false;
+
+		// Initialize aircraft constants
+		const double MTOW = 22000.; // kg (from https://www.atr-aircraft.com/wp-content/uploads/2020/07/72-500.pdf)
+		const double M_empty = 13500.; // kg (from https://www.atr-aircraft.com/wp-content/uploads/2020/07/72-500.pdf)
+		const double x_CG_empty = 12.202; // m (measured from https://www.atr-aircraft.com/wp-content/uploads/2020/07/72-500.pdf)
+		const double x_CG_JA1 = 12.203; // m (measured from https://www.atr-aircraft.com/wp-content/uploads/2020/07/72-500.pdf)
+		const double M_cargo_front_max = 928.; // kg from https://www.theairlinepilots.com/apps/atr/atr72-loadsheet.php
+		const double x_CG_cargo_front = 4.192; //m (measured from https://www.atr-aircraft.com/wp-content/uploads/2020/07/72-500.pdf)
+		const double M_cargo_rear_max = 637.; // kg from https://www.theairlinepilots.com/apps/atr/atr72-loadsheet.php
+		const double x_CG_cargo_rear = 21.4555; // m (measured from https://www.atr-aircraft.com/wp-content/uploads/2020/07/72-500.pdf)
+		const double pass_packing_density = 429.02; // kg/m (measured from https://www.atr-aircraft.com/wp-content/uploads/2020/07/72-500.pdf)
+		const double x_per_row = 0.748; // m (measured from https://www.atr-aircraft.com/wp-content/uploads/2020/07/72-500.pdf)
+		const double mass_per_pax = 80.; // kg (based on data from https://bmcpublichealth.biomedcentral.com/articles/10.1186/1471-2458-12-439)
+		double M_pass_total = 0.; //kg
+
+		// Initialize engine constants
+		const double M_PW127 = 480.; // kg (from https://en.wikipedia.org/wiki/Pratt_%26_Whitney_Canada_PW100)
+		const double x_CG_engine = 10.63; // m (measured from https://www.atr-aircraft.com/wp-content/uploads/2020/07/72-500.pdf)
+
+		// Initialize fuel constants
+		const double c_JA1 = 43.0; // MJ/kg (specific energy = LCV) (Data from https://www.engineeringtoolbox.com/fuels-higher-calorific-values-d_169.html)
+		const double c_H2 = 121.1; // MJ/kg (specific energy) (Hand calculated with data from https://www.engineeringtoolbox.com/fuels-higher-calorific-values-d_169.html
+		const double rho_H2_tank = 67.3; // kg/m^3 https://www.mdpi.com/1996-1073/11/1/105
+		const double rho_H2_l = 70.8; // kg/m^3 https://www1.eere.energy.gov/hydrogenandfuelcells/tech_validation/pdfs/fcm01r0.pdf
+		const double rho_H2_g = rho_H2_l / 5.6; // kg/m^3 https://www.mdpi.com/1996-1073/11/1/105
+		const double tank_eta = 0.63; // H2 kg req / system kg https://www.mdpi.com/1996-1073/11/1/105
+		const double c = 1.121; // m of effective tank radius (measured from https://www.atr-aircraft.com/wp-content/uploads/2020/07/72-500.pdf)
+		const double tank_vol_max = 47.11; //m^3 (in order to keep CG at same location as empty aircraft) (measured from https://www.atr-aircraft.com/wp-content/uploads/2020/07/72-500.pdf)
+
+		// Calculate the base aircraft empty CG product and mass
+		double CG_product = M_empty * x_CG_empty;
+		double M_total = M_empty;
+
+		// Account for the different engine
+		const double delta_M_engines = 2. * (ip_M_engine - M_PW127); // kg
+		CG_product += delta_M_engines * x_CG_engine;
+		M_total += delta_M_engines;
+
+		// Calculate the amount of kerosene and hydrogen
+		const double M_H2 = ip_M_fuel / (1. + (c_H2 / c_JA1) * (1. / ip_H2_frac - 1.)); // kg; // kg
+		const double M_JA1 = ip_M_fuel - M_H2; // kg
+		op_M_JA1 = M_JA1;
+
+		// Account for the kerosene
+		CG_product += M_JA1 * x_CG_JA1;
+		M_total += M_JA1;
+
+		// Calculate the volume and mass of the H2 system, and account for it
+		const double Vol_H2sys_design = ip_M_H2_design / rho_H2_tank; // m^3
+		const double Vol_H2sys = M_H2 / (rho_H2_tank - rho_H2_g) * (1. - rho_H2_g / rho_H2_l); // m^3
+
+		// Check to see whether the new amount of fuel can be carried
+		if (Vol_H2sys_design < Vol_H2sys) { return false; }
+
+		// Account for the hydrogen on board
+		const double M_H2_system_design = ip_M_H2_design / tank_eta; // kg
+		const double M_H2_tank = M_H2_system_design - rho_H2_tank * Vol_H2sys_design; // kg
+		op_M_H2_net = Vol_H2sys * rho_H2_tank; //kg
+
+		const double M_H2_system = M_H2_tank + Vol_H2sys * rho_H2_tank;
+		CG_product += M_H2_system * x_CG_empty;
+		M_total += M_H2_system;
+
+		// Check whether the mass constraint has been violated
+		double M_pay_remaining = MTOW - M_total;
+		op_payload = M_pay_remaining;
+
+		if (M_pay_remaining <= 0.) {
+			op_vio_mass = true;
+		}
+		else {
+			op_vio_mass = false;
+		}
+
+		// Compute the number of seats available and the total mass these passengers will have
+		const int num_seats = ip_num_seats;
+		const double max_pass_mass = num_seats * mass_per_pax;
+
+		// Distribute all of the passengers symetrically across both cabins (the centre of the cabin is the
+		// empty cg)
+		if (max_pass_mass >= M_pay_remaining) {
+
+			CG_product += M_pay_remaining * x_CG_empty;
+			M_total += M_pay_remaining;
+			M_pass_total += M_pay_remaining;
+
+			op_num_pax = static_cast<int>(floor(M_pay_remaining / mass_per_pax));
+			op_payload = M_total - M_empty - delta_M_engines - M_H2_system - M_JA1;
+			op_calc_mass = M_total;
+			op_cg_loc = CG_product / M_total;
+			op_calc_mass_nofuel = M_total - M_JA1 - M_H2;
+			op_cg_loc_nofuel = (CG_product - M_JA1 * x_CG_JA1 - M_H2 * x_CG_empty)
+				/ op_calc_mass_nofuel;
+
+			return true;
+
+		}
+		else {
+			// Distribute all of the passengers symetrically across both cabins
+			CG_product += max_pass_mass * x_CG_empty;
+			M_total += max_pass_mass;
+			M_pay_remaining += -max_pass_mass;
+
+			op_num_pax = num_seats;
+		}
+
+		// Now, fill out the cargo compartments (front first)
+		if (M_pay_remaining > M_cargo_front_max) {
+			M_pay_remaining += -M_cargo_front_max;
+
+			// Account for the rear cargo compartment
+			CG_product += M_cargo_front_max * x_CG_cargo_front;
+			M_total += M_cargo_front_max;
+
+			// Put the remaining amount in the front compartment
+			if (M_pay_remaining > M_cargo_rear_max) {
+				CG_product += M_cargo_rear_max * x_CG_cargo_rear;
+				M_total += M_cargo_rear_max;
+			}
+			else {
+				CG_product += M_pay_remaining * x_CG_cargo_rear;
+				M_total += M_pay_remaining;
+			}
+		}
+		else {
+			CG_product += M_pay_remaining * x_CG_cargo_front;
+			M_total += M_pay_remaining;
+		}
+
+		op_payload = M_total - M_empty - delta_M_engines - M_H2_system - M_JA1;
+		op_calc_mass = M_total;
+		op_cg_loc = CG_product / M_total;
+		op_calc_mass_nofuel = M_total - M_JA1 - M_H2;
+		op_cg_loc_nofuel = (CG_product - M_JA1 * x_CG_JA1 - M_H2 * x_CG_empty)
+			/ op_calc_mass_nofuel;
+
+		return true;
+	}
+
+
 
 }
