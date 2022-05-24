@@ -184,6 +184,14 @@ namespace AircraftModel {
 		double& op_cg_loc, double& op_calc_mass, double& op_cg_loc_nofuel, double& op_calc_mass_nofuel,
 		double& op_payload, double& op_M_JA1, double& op_M_H2_net, int& op_num_pax, double& op_tank_l,
 		bool& op_vio_mass, bool& op_vio_vol);
+
+	// Modified version of compute_cg_loc_mass_pax that allows the weights to be distributed for an
+	// aircraft off-design.
+	bool compute_cg_loc_mass_offdesign(const double& ip_M_engine, const double& ip_M_fuel, const double& ip_M_H2_design,
+		const double& ip_H2_frac, const int& ip_num_seats, double& op_cg_loc, double& op_calc_mass,
+		double& op_cg_loc_nofuel, double& op_calc_mass_nofuel, double& op_payload, double& op_M_JA1, double& op_M_H2_net,
+		int& op_num_pax, bool& op_vio_mass, bool& op_vio_vol);
+		
 }
 
 #endif
