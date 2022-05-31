@@ -318,9 +318,14 @@ namespace AircraftModel {
 
 	double correl_turboprop_mass(const double& P_max) {
 		// Computes the turboprop mass (in kg) for a given max. power requirement by using a
-		// correlation from the data available in the following website under the 
+		// correlation made from the data available in the following website under the 
 		// specifications section:
 		// https://en.wikipedia.org/wiki/Pratt_%26_Whitney_Canada_PW100
+		// 
+		// This data is originally from:
+		// S. Gudmundsson, General Aviation Aircraft Design: Applied Methods and Procedures. 
+		// Elsevier Science, 2021, p. 227, isbn: 9780128226476. [Online]. 
+		// Available: https://books.google.co.uk/books?id=VXcrEAAAQBAJ, Accessed on May 15, 2022.
 		// 
 		// The input is the maximum power requirement of the engine in kW, and the output is
 		// the likely engine mass in kg.
@@ -333,6 +338,11 @@ namespace AircraftModel {
 		// maximum power requirement by using a correlation from the data available in the 
 		// following website under the specifications section:
 		// https://en.wikipedia.org/wiki/Pratt_%26_Whitney_Canada_PW100
+		// 
+		// This data is originally from:
+		// S. Gudmundsson, General Aviation Aircraft Design: Applied Methods and Procedures. 
+		// Elsevier Science, 2021, p. 227, isbn: 9780128226476. [Online]. 
+		// Available: https://books.google.co.uk/books?id=VXcrEAAAQBAJ, Accessed on May 15, 2022.
 		// 
 		// The input is the maximum power requirement of the engine in kW, and the output is
 		// the likely BSFC in g/kWh.
