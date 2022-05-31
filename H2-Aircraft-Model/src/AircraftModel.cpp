@@ -12,7 +12,7 @@ namespace AircraftModel {
 		//
 		// Based on the following lecture slides: 
 		// Engineering Tripos Part IIB, 4A7: Aircraft Aerodynamics and Design
-		// Bill Dawes (with thanks to Dr Chez Hall), slides 20-22
+		// 2021-2022 Bill Dawes (with thanks to Dr Chez Hall), slides 20-22
 	
 		// Initialize the relevant quantities at sea level. Viscosity data from:
 		// http://www.aerodynamics4students.com/properties-of-the-atmosphere/sea-level-conditions.php
@@ -274,6 +274,9 @@ namespace AircraftModel {
 	double compute_ground_run_raymer(const double& MTOW, const double& S_wing, const double&
 		sl_rho_ratio, const double& CL_TO, const double& BHP) {
 		// Implements the take-off run estimation from Fig 5.4 in the Raymer book.
+		// Raymer, D. P., & American Institute of Aeronautics and Astronautics. (1989). 
+		// Aircraft design: A conceptual approach. Washington, D.C: 
+		// American Institute of Aeronautics and Astronautics
 		//
 		// The inputs are "MTOW" in tonnes, the wing area "S_wing" in m^2, the density ratio
 		// relative to sea level "sl_rho_ratio", the take-off lift coefficient "CL_TO" and the
@@ -301,6 +304,10 @@ namespace AircraftModel {
 
 	double compute_eta_prop_raymer(const double& thrust, const double& TAS, const double& P) {
 		// Computes the propeller efficiency according to equation (13.15) from Raymer.
+		// 
+		// Raymer, D. P., & American Institute of Aeronautics and Astronautics. (1989). 
+		// Aircraft design: A conceptual approach. Washington, D.C: 
+		// American Institute of Aeronautics and Astronautics
 		//
 		// The input "thrust" is the Thrust in kN, the "TAS" is the True Arispeed in m/s, and
 		// "P" is the power in kW. If the thrust of one engine is given, the power given must
@@ -311,9 +318,14 @@ namespace AircraftModel {
 
 	double correl_turboprop_mass(const double& P_max) {
 		// Computes the turboprop mass (in kg) for a given max. power requirement by using a
-		// correlation from the data available in the following website under the 
+		// correlation made from the data available in the following website under the 
 		// specifications section:
 		// https://en.wikipedia.org/wiki/Pratt_%26_Whitney_Canada_PW100
+		// 
+		// This data is originally from:
+		// S. Gudmundsson, General Aviation Aircraft Design: Applied Methods and Procedures. 
+		// Elsevier Science, 2021, p. 227, isbn: 9780128226476. [Online]. 
+		// Available: https://books.google.co.uk/books?id=VXcrEAAAQBAJ, Accessed on May 15, 2022.
 		// 
 		// The input is the maximum power requirement of the engine in kW, and the output is
 		// the likely engine mass in kg.
@@ -326,6 +338,11 @@ namespace AircraftModel {
 		// maximum power requirement by using a correlation from the data available in the 
 		// following website under the specifications section:
 		// https://en.wikipedia.org/wiki/Pratt_%26_Whitney_Canada_PW100
+		// 
+		// This data is originally from:
+		// S. Gudmundsson, General Aviation Aircraft Design: Applied Methods and Procedures. 
+		// Elsevier Science, 2021, p. 227, isbn: 9780128226476. [Online]. 
+		// Available: https://books.google.co.uk/books?id=VXcrEAAAQBAJ, Accessed on May 15, 2022.
 		// 
 		// The input is the maximum power requirement of the engine in kW, and the output is
 		// the likely BSFC in g/kWh.
@@ -346,7 +363,7 @@ namespace AircraftModel {
 
 	double calculate_hybrid_BSFC(const double& H2_frac, const double& h, const double& P_max) {
 		// Given an input hydrogen fraction "H2_frac", a cruise altitude "h" in km, and a 
-		// maximum power output for a single turboprop engine "P_max" in kW, give the hybrid
+		// maximum power output for a single turboprop engine "P_max" in kW, return the hybrid
 		// BSFC for a single engine in kg/J;
 		// 
 		// BSFC Equation: BSFC = Fuel Consumption/Power
@@ -383,9 +400,10 @@ namespace AircraftModel {
 	int compute_num_seats(const double& H2_tank_len, const double& H2_pfrac) {
 		// Compute the number of passengers by considering the number of rows occupied by the tanks.
 		// The "H2_tank_len" input should be in meters.
+		// Data from https://www.atr-aircraft.com/wp-content/uploads/2020/07/72-500.pdf
 
-		int num_pax = 68; // (from https ://www.atr-aircraft.com/wp-content/uploads/2020/07/72-500.pdf)
-		int pax_per_row = 4; // (from https ://www.atr-aircraft.com/wp-content/uploads/2020/07/72-500.pdf)
+		int num_pax = 68; // (from https://www.atr-aircraft.com/wp-content/uploads/2020/07/72-500.pdf)
+		int pax_per_row = 4; // (from https://www.atr-aircraft.com/wp-content/uploads/2020/07/72-500.pdf)
 		double len_row = 0.748; //m (measured from https://www.atr-aircraft.com/wp-content/uploads/2020/07/72-500.pdf)
 
 		if (H2_pfrac < 1e-3 || H2_tank_len < 1e-3) {
@@ -408,7 +426,9 @@ namespace AircraftModel {
 		// in m, the payload mass "op_payload". It also states whether the volume and mass
 		// constraints have been violated in "op_vio_vol" and "op_vio_mass" respectively. The nofuel
 		// version of the outputs are those which assume a zero-fuel aircraft (they still include the
-		// mass of hydrogen tanks). The mass of kerosene "op_M_JA1" in kg is also given.
+		// mass of hydrogen tanks). The mass of kerosene "op_M_JA1" in kg is also given. The hydrogen
+		// tank length "op_tank_l", mass of kerosene "op_M_JA1", total mass of hydrogen "op_M_H2_net",
+		// and number of passengers on-board "op_num_pax" are also computed.
 		// 
 		// The inputs are the mass of the engine "ip_M_engine" in kg, the ip TOTAL fuel mass 
 		// "ip_M_fuel" in kg, and the H2 power fraction "ip_H2_frac" (power of hydrogen divided 
@@ -419,6 +439,8 @@ namespace AircraftModel {
 		// aircraft to have a total mass that is LESS THAN MTOW, meaning that THIS FUNCTION NEEDS
 		// TO BE ITERATED to achieve concordance to the payload fraction assumed in breguet and the
 		// output of this program.
+		//
+		// This version loads a discrete number of passengers.
 
 
 		// Initialise all outputs
@@ -592,7 +614,9 @@ namespace AircraftModel {
 		// in m, the payload mass "op_payload". It also states whether the volume and mass
 		// constraints have been violated in "op_vio_vol" and "op_vio_mass" respectively. The nofuel
 		// version of the outputs are those which assume a zero-fuel aircraft (they still include the
-		// mass of hydrogen tanks). The mass of kerosene "op_M_JA1" in kg is also given.
+		// mass of hydrogen tanks). The mass of kerosene "op_M_JA1" in kg is also given. The hydrogen
+		// tank length "op_tank_l", mass of kerosene "op_M_JA1", total mass of hydrogen "op_M_H2_net",
+		// and number of passengers on-board "op_num_pax" are also computed.
 		// 
 		// The inputs are the mass of the engine "ip_M_engine" in kg, the ip TOTAL fuel mass 
 		// "ip_M_fuel" in kg, and the H2 power fraction "ip_H2_frac" (power of hydrogen divided 
@@ -603,6 +627,8 @@ namespace AircraftModel {
 		// aircraft to have a total mass that is LESS THAN MTOW, meaning that THIS FUNCTION NEEDS
 		// TO BE ITERATED to achieve concordance to the payload fraction assumed in breguet and the
 		// output of this program.
+		//
+		// This version loads a continuous aircraft (passengers assumed to be evenly distributed)
 
 
 		// Initialise all outputs
@@ -800,7 +826,7 @@ namespace AircraftModel {
 		double& op_cg_loc_nofuel, double& op_calc_mass_nofuel, double& op_payload, double& op_M_JA1, double& op_M_H2_net,
 		int& op_num_pax, bool& op_vio_mass, bool& op_vio_vol) {
 		// Modified version of compute_cg_loc_mass_pax that allows the weights to be distributed for an
-		// aircraft off-design.
+		// aircraft off-design. The inputs are the "off-design" inputs.
 
 
 		// Initialise all outputs

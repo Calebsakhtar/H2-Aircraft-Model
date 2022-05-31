@@ -4,6 +4,9 @@ namespace MathTools {
 
 	bool interpolate_fn(const std::vector<double>& x_vals, const std::vector<double>& y_vals,
 		const double& input_x, double& result_y, const bool reverse) {
+		// Given an input "input_x" that lies within the range of values of the sorted vector
+		// "x_vals", return the corresponding output "result_y" by interpolating through the
+		// output sample of points "y_vals".
 
 		// Perform checks to the input data
 		assert(x_vals.size() > 0);

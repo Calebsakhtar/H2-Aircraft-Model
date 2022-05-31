@@ -9,6 +9,12 @@ namespace PlaneMakerTools {
 		// string line. In the arguments, this function returns ALL lines of the
 		// specified files as well. The output of this function is the index of the
 		// line where the "line" input string is located.
+		//
+		// Implements a code snippet from https://stackoverflow.com/a/2340309
+		// 
+		// Understanding of fstream was from examples in
+		// https://www.cplusplus.com/doc/tutorial/files/ and
+		// https://www.w3schools.com/cpp/cpp_files.asp
 	
 		// Open the file containing the designs
 		std::ifstream acf_file(acf_filepath);
@@ -36,6 +42,7 @@ namespace PlaneMakerTools {
 					size_t temp_idx = temp_line.find(line);
 
 					// If a match is found, store the current line index
+					// https://stackoverflow.com/a/2340309
 					if (temp_idx != std::string::npos)
 					{
 						idx = i;
@@ -64,6 +71,10 @@ namespace PlaneMakerTools {
 		// Given a string "line", a list of lines "acf_lines", and a corresponsing index "idx", this
 		// function replaces the "idx"-th member of "acf_lines" with lines and writes it to the file 
 		// given by the "acf_filepath".
+		// 
+		// Understanding of fstream was from examples in
+		// https://www.cplusplus.com/doc/tutorial/files/ and
+		// https://www.w3schools.com/cpp/cpp_files.asp
 	
 		// Replace the line in the file with the new line
 		acf_lines[idx] = line;
