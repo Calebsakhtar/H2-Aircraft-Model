@@ -93,6 +93,9 @@ namespace AircraftModel {
 	double compute_cruise_BSFC_PW127(const double& h);
 
 	// Implements the take-off run estimation from Fig 5.4 in the Raymer book.
+	// Raymer, D. P., & American Institute of Aeronautics and Astronautics. (1989). 
+	// Aircraft design: A conceptual approach. Washington, D.C: 
+	// American Institute of Aeronautics and Astronautics
 	//
 	// The inputs are "MTOW" in tonnes, the wing area "S_wing" in m^2, the density ratio
 	// relative to sea level "sl_rho_ratio", the take-off lift coefficient "CL_TO" and the
@@ -102,6 +105,10 @@ namespace AircraftModel {
 		sl_rho_ratio, const double& CL_TO, const double& BHP);
 
 	// Computes the propeller efficiency according to equation (13.15) from Raymer.
+	// 
+	// Raymer, D. P., & American Institute of Aeronautics and Astronautics. (1989). 
+	// Aircraft design: A conceptual approach. Washington, D.C: 
+	// American Institute of Aeronautics and Astronautics
 	//
 	// The input "thrust" is the Thrust in kN, the "TAS" is the True Arispeed in m/s, and
 	// "P" is the power in kW. If the thrust of one engine is given, the power given must
@@ -132,7 +139,7 @@ namespace AircraftModel {
 	double compute_new_engine_cruise_BSFC(const double& BSFC_TO, const double& h);
 
 	// Given an input hydrogen fraction "H2_frac", a cruise altitude "h" in km, and a 
-	// maximum power output for a single turboprop engine "P_max" in kW, give the hybrid
+	// maximum power output for a single turboprop engine "P_max" in kW, return the hybrid
 	// BSFC for a single engine in kg/J;
 	// 
 	// BSFC Equation: BSFC = Fuel Consumption/Power
@@ -157,7 +164,7 @@ namespace AircraftModel {
 	// TO BE ITERATED to achieve concordance to the payload fraction assumed in breguet and the
 	// output of this program.
 	//
-	// This version loads a discrete number of passengers
+	// This version loads a discrete number of passengers.
 	bool compute_cg_loc_mass_pax(const double& ip_M_engine, const double& ip_M_fuel, const double& ip_H2_frac,
 		double& op_cg_loc, double& op_calc_mass, double& op_cg_loc_nofuel, double& op_calc_mass_nofuel,
 		double& op_payload, double& op_M_JA1, double& op_M_H2_net, int& op_num_pax, double& op_tank_l,
@@ -167,7 +174,9 @@ namespace AircraftModel {
 	// in m, the payload mass "op_payload". It also states whether the volume and mass
 	// constraints have been violated in "op_vio_vol" and "op_vio_mass" respectively. The nofuel
 	// version of the outputs are those which assume a zero-fuel aircraft (they still include the
-	// mass of hydrogen tanks). The mass of kerosene "op_M_JA1" in kg is also given.
+	// mass of hydrogen tanks). The mass of kerosene "op_M_JA1" in kg is also given. The hydrogen
+	// tank length "op_tank_l", mass of kerosene "op_M_JA1" total mass of hydrogen "op_M_H2_net",
+	// and number of passengers on-board "op_num_pax" are also computed.
 	// 
 	// The inputs are the mass of the engine "ip_M_engine" in kg, the ip TOTAL fuel mass 
 	// "ip_M_fuel" in kg, and the H2 power fraction "ip_H2_frac" (power of hydrogen divided 
@@ -186,7 +195,25 @@ namespace AircraftModel {
 		bool& op_vio_mass, bool& op_vio_vol);
 
 	// Modified version of compute_cg_loc_mass_pax that allows the weights to be distributed for an
-	// aircraft off-design.
+	// aircraft off-design. The inputs are the "off-design" inputs.
+	//
+	// Compute the total mass "op_calc_mass" in kg, the centre of gravity location "op_cg_loc"
+	// in m, the payload mass "op_payload". It also states whether the volume and mass
+	// constraints have been violated in "op_vio_vol" and "op_vio_mass" respectively. The nofuel
+	// version of the outputs are those which assume a zero-fuel aircraft (they still include the
+	// mass of hydrogen tanks). The mass of kerosene "op_M_JA1" in kg is also given. The hydrogen
+	// tank length "op_tank_l", mass of kerosene "op_M_JA1" total mass of hydrogen "op_M_H2_net",
+	// and number of passengers on-board "op_num_pax" are also computed.
+	// 
+	// The inputs are the mass of the engine "ip_M_engine" in kg, the ip TOTAL fuel mass 
+	// "ip_M_fuel" in kg, and the H2 power fraction "ip_H2_frac" (power of hydrogen divided 
+	// by power of kerosene).
+	//
+	// To compute the masses, first the volume of hydrogen needed is considered and the
+	// remaining payload (to reach MTOW) is packed in the remaining space. This allows for the
+	// aircraft to have a total mass that is LESS THAN MTOW, meaning that THIS FUNCTION NEEDS
+	// TO BE ITERATED to achieve concordance to the payload fraction assumed in breguet and the
+	// output of this program.
 	bool compute_cg_loc_mass_offdesign(const double& ip_M_engine, const double& ip_M_fuel, const double& ip_M_H2_design,
 		const double& ip_H2_frac, const int& ip_num_seats, double& op_cg_loc, double& op_calc_mass,
 		double& op_cg_loc_nofuel, double& op_calc_mass_nofuel, double& op_payload, double& op_M_JA1, double& op_M_H2_net,
